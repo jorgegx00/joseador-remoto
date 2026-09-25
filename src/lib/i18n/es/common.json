@@ -1,0 +1,192 @@
+{
+  "app_name": "Joseador Remoto",
+  "nav": {
+    "dashboard": "Panel",
+    "jobs": "Empleos",
+    "cv": "Hojas de Vida",
+    "applications": "Postulaciones",
+    "interviews": "Entrevistas",
+    "reports": "Reportes",
+    "settings": "Configuraciones",
+    "calendar": "Calendario",
+    "optimize_cv": "Optimizar CV"
+  },
+  "actions": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "export": "Exportar",
+    "import": "Importar",
+    "refresh": "Actualizar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "apply": "Postular",
+    "reset": "Restablecer",
+    "upload": "Subir",
+    "download": "Descargar",
+    "copy": "Copiar",
+    "retry": "Reintentar",
+    "generate": "Generar",
+    "analyze": "Analizar",
+    "clear": "Limpiar"
+  },
+  "status": {
+    "loading": "Cargando...",
+    "loading_data": "Cargando datos...",
+    "processing": "Procesando...",
+    "generating": "Generando...",
+    "scraping": "Buscando empleos...",
+    "saving": "Guardando...",
+    "saved": "Guardado",
+    "error": "Error",
+    "success": "Exitoso",
+    "no_results": "Sin resultados",
+    "empty": "Vacio"
+  },
+  "application_status": {
+    "saved": "Guardada",
+    "applied": "Postulada",
+    "phone_screen": "Llamada inicial",
+    "interviewing": "En entrevista",
+    "technical": "Prueba tecnica",
+    "final": "Ronda final",
+    "rejected": "Rechazada",
+    "offered": "Con oferta",
+    "accepted": "Aceptada",
+    "withdrawn": "Retirada"
+  },
+  "interview_types": {
+    "phone_screen": "Llamada telefonica",
+    "technical": "Tecnica",
+    "behavioral": "Conductual",
+    "system_design": "Diseno de sistemas",
+    "hiring_manager": "Gerente de contratacion",
+    "final": "Entrevista final",
+    "take_home": "Prueba para llevar"
+  },
+  "seniority_levels": {
+    "junior": "Junior",
+    "mid": "Mid-level",
+    "senior": "Senior",
+    "lead": "Lead",
+    "principal": "Principal"
+  },
+  "employment_types": {
+    "full_time": "Tiempo completo",
+    "contract": "Contrato",
+    "part_time": "Medio tiempo"
+  },
+  "job_sources": {
+    "aggregator": "Bolsa de empleo",
+    "career_page": "Pagina de carreras",
+    "google_jobs": "Google Jobs",
+    "linkedin": "LinkedIn",
+    "manual": "Pegado"
+  },
+  "errors": {
+    "generic_error": "Ha ocurrido un error inesperado",
+    "network_error": "Error de conexion. Verifica tu internet",
+    "not_found": "No se encontro el recurso solicitado",
+    "unauthorized": "No tienes autorizacion para esta accion",
+    "server_error": "Error del servidor. Intenta de nuevo mas tarde",
+    "copy_failed": "No se pudo copiar al portapapeles"
+  },
+  "loading": {
+    "loading": "Cargando...",
+    "loading_data": "Cargando datos...",
+    "processing": "Procesando...",
+    "generating": "Generando contenido...",
+    "scraping": "Buscando empleos..."
+  },
+  "empty": {
+    "no_data": "No hay datos disponibles",
+    "no_results": "No se encontraron resultados",
+    "no_jobs": "No se encontraron empleos",
+    "no_cvs": "No has subido ningun CV",
+    "no_applications": "No tienes postulaciones"
+  },
+  "confirm": {
+    "confirm_delete": "Estas seguro de que deseas eliminar esto? Esta accion no se puede deshacer.",
+    "confirm_apply": "Confirmar postulacion a este empleo?",
+    "confirm_reset": "Restablecer a valores predeterminados? Se perderan los cambios."
+  },
+  "dr_friendly": {
+    "dr_friendly": "Apto para RD",
+    "check_eligibility": "Verificar elegibilidad"
+  },
+  "time": {
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "days_ago": "hace {{count}} dias",
+    "weeks_ago": "hace {{count}} semanas",
+    "months_ago": "hace {{count}} meses",
+    "this_week": "Esta semana",
+    "this_month": "Este mes",
+    "all_time": "Todo el tiempo"
+  },
+  "file_types": {
+    "pdf": "PDF",
+    "docx": "DOCX",
+    "md": "Markdown"
+  },
+  "grades": {
+    "grade_a": "Excelente",
+    "grade_b": "Bueno",
+    "grade_c": "Regular",
+    "grade_d": "Bajo",
+    "grade_f": "Insuficiente"
+  },
+  "confirm_delete": "Estas seguro de que deseas eliminar esto?",
+  "unsaved_changes": "Tienes cambios sin guardar. Deseas salir?",
+  "language": "Idioma",
+  "theme": "Tema",
+  "theme_light": "Claro",
+  "theme_dark": "Oscuro",
+  "theme_system": "Sistema",
+  "search_command": "Cmd+K",
+  "notifications": "Notificaciones",
+  "breadcrumb": {
+    "home": "Inicio",
+    "jobs": "Empleos",
+    "job_detail": "Detalle del empleo",
+    "cv": "Hojas de Vida",
+    "cv_detail": "Detalle del CV",
+    "ats_report": "Reporte ATS",
+    "applications": "Postulaciones",
+    "application_detail": "Detalle de postulacion",
+    "interview_prep": "Preparacion",
+    "interviews": "Entrevistas",
+    "settings": "Configuraciones"
+  },
+  "version": "v0.1.0",
+  "export": {
+    "button": "Exportar",
+    "pdf": "PDF",
+    "docx": "Word (.docx)",
+    "md": "Markdown (.md)",
+    "exporting": "Exportando…",
+    "saved_to": "Guardado en {{path}}",
+    "cancelled": "Exportacion cancelada",
+    "failed": "Error al exportar: {{error}}"
+  },
+  "ollama_chip": {
+    "loaded": "Cargado y listo",
+    "idle": "Instalado, no cargado (se carga al primer uso)",
+    "loading": "Cargando…",
+    "offline": "El servidor de Ollama no esta en ejecucion",
+    "starting": "Iniciando Ollama…",
+    "not_installed": "Modelo no instalado. Descargalo en Ajustes.",
+    "unknown": "Comprobando…",
+    "start_server": "Iniciar Ollama",
+    "load": "Cargar",
+    "unload": "Liberar",
+    "settings": "Ajustes"
+  }
+}

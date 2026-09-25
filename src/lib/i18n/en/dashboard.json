@@ -1,0 +1,64 @@
+{
+  "welcome": "Hello, {{name}}!",
+  "welcome_generic": "Welcome back!",
+  "subtitle": "Here's your job search overview.",
+  "stats": {
+    "total_jobs": "Total Jobs Found",
+    "applications_sent": "Applications Sent",
+    "interviews_scheduled": "Interviews Scheduled",
+    "offers": "Offers",
+    "vs_last_week": "vs last week",
+    "this_week": "this week",
+    "next_interview": "Next: {{time}}",
+    "no_upcoming": "None upcoming"
+  },
+  "funnel": {
+    "title": "Application Pipeline",
+    "jobs_viewed": "Jobs Viewed",
+    "applied": "Applied",
+    "phone_screen": "Phone Screen",
+    "interviewing": "Interviewing",
+    "offered": "Offered",
+    "accepted": "Accepted",
+    "conversion": "{{rate}}% conversion"
+  },
+  "upcoming_interviews": {
+    "title": "Upcoming Interviews",
+    "empty_title": "No interviews scheduled",
+    "empty_description": "Browse jobs and apply to get started",
+    "browse_jobs": "Browse Jobs",
+    "prep": "Prep",
+    "in_hours": "in {{count}} hour",
+    "in_hours_plural": "in {{count}} hours",
+    "in_minutes": "in {{count}} minute",
+    "in_minutes_plural": "in {{count}} minutes",
+    "tomorrow": "Tomorrow",
+    "in_days": "in {{count}} days",
+    "today_at": "Today at {{time}}",
+    "tomorrow_at": "Tomorrow at {{time}}"
+  },
+  "recent_jobs": {
+    "title": "Recent DR-Friendly Jobs",
+    "view_all": "View All",
+    "empty_title": "No jobs found",
+    "empty_description": "Search for jobs to get started",
+    "posted": "Posted {{date}}"
+  },
+  "ats_trend": {
+    "title": "ATS Score Trend",
+    "score": "Score",
+    "date": "Date",
+    "empty_title": "No ATS reports yet",
+    "empty_description": "Run your first ATS analysis to see your score trend",
+    "run_ats": "Run ATS Check",
+    "cv_version": "{{name}}"
+  },
+  "quick_actions": {
+    "title": "Quick Actions",
+    "search_jobs": "Search New Jobs",
+    "upload_cv": "Upload CV",
+    "run_ats": "Run ATS Check",
+    "view_applications": "View Applications"
+  },
+  "loading": "Loading dashboard..."
+}

@@ -1,0 +1,20 @@
+{
+  "title": "Reports",
+  "subtitle": "Generate a plain-text report of jobs that hire in DR, ready to share",
+  "generate_title": "Jobs report",
+  "last_report": "Last report: {{when}}",
+  "no_previous_report": "No report generated yet — the first one will include all jobs",
+  "include_all": "Include all jobs (not just new ones since the last report)",
+  "generate": "Generate report",
+  "generating": "Generating...",
+  "generate_failed": "Could not generate the report: {{message}}",
+  "included_count": "{{count}} jobs in the report",
+  "skipped_non_tech": "{{count}} skipped as non-tech roles",
+  "empty": "No new jobs since the last report. Run a scrape and sync, or enable \"Include all\".",
+  "copy": "Copy",
+  "copied": "Report copied to clipboard",
+  "save": "Save .txt",
+  "saved": "Report saved to {{path}}",
+  "save_failed": "Could not save: {{message}}",
+  "preview_title": "Preview"
+}

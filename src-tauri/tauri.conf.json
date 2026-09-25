@@ -1,0 +1,37 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicedoc/tauri-v2-schema/main/tauri.conf.json",
+  "productName": "Joseador Remoto",
+  "identifier": "com.joseador-remoto.app",
+  "version": "0.1.0",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "cd sidecar && npm run build && cd .. && npm run dev",
+    "beforeBuildCommand": "cd sidecar && npm run build && cd .. && npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Joseador Remoto",
+        "width": 1280,
+        "height": 800,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["msi", "nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "title": "Reportes",
+  "subtitle": "Genera un reporte en texto plano de los empleos que contratan en RD, listo para compartir",
+  "generate_title": "Reporte de empleos",
+  "last_report": "Ultimo reporte: {{when}}",
+  "no_previous_report": "Aun no has generado ningun reporte — el primero incluira todos los empleos",
+  "include_all": "Incluir todos los empleos (no solo los nuevos desde el ultimo reporte)",
+  "generate": "Generar reporte",
+  "generating": "Generando...",
+  "generate_failed": "No se pudo generar el reporte: {{message}}",
+  "included_count": "{{count}} empleos en el reporte",
+  "skipped_non_tech": "{{count}} descartados por no ser roles tech",
+  "empty": "No hay empleos nuevos desde el ultimo reporte. Ejecuta el scraping y sincroniza, o activa \"Incluir todos\".",
+  "copy": "Copiar",
+  "copied": "Reporte copiado al portapapeles",
+  "save": "Guardar .txt",
+  "saved": "Reporte guardado en {{path}}",
+  "save_failed": "No se pudo guardar: {{message}}",
+  "preview_title": "Vista previa"
+}

@@ -1,0 +1,192 @@
+{
+  "app_name": "Joseador Remoto",
+  "nav": {
+    "dashboard": "Dashboard",
+    "jobs": "Jobs",
+    "cv": "Resumes",
+    "applications": "Applications",
+    "interviews": "Interviews",
+    "reports": "Reports",
+    "settings": "Settings",
+    "calendar": "Calendar",
+    "optimize_cv": "Optimize CV"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "refresh": "Refresh",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "close": "Close",
+    "confirm": "Confirm",
+    "apply": "Apply",
+    "reset": "Reset",
+    "upload": "Upload",
+    "download": "Download",
+    "copy": "Copy",
+    "retry": "Retry",
+    "generate": "Generate",
+    "analyze": "Analyze",
+    "clear": "Clear"
+  },
+  "status": {
+    "loading": "Loading...",
+    "loading_data": "Loading data...",
+    "processing": "Processing...",
+    "generating": "Generating...",
+    "scraping": "Scraping jobs...",
+    "saving": "Saving...",
+    "saved": "Saved",
+    "error": "Error",
+    "success": "Success",
+    "no_results": "No results",
+    "empty": "Empty"
+  },
+  "application_status": {
+    "saved": "Saved",
+    "applied": "Applied",
+    "phone_screen": "Phone Screen",
+    "interviewing": "Interviewing",
+    "technical": "Technical",
+    "final": "Final Round",
+    "rejected": "Rejected",
+    "offered": "Offered",
+    "accepted": "Accepted",
+    "withdrawn": "Withdrawn"
+  },
+  "interview_types": {
+    "phone_screen": "Phone Screen",
+    "technical": "Technical",
+    "behavioral": "Behavioral",
+    "system_design": "System Design",
+    "hiring_manager": "Hiring Manager",
+    "final": "Final Interview",
+    "take_home": "Take Home"
+  },
+  "seniority_levels": {
+    "junior": "Junior",
+    "mid": "Mid-level",
+    "senior": "Senior",
+    "lead": "Lead",
+    "principal": "Principal"
+  },
+  "employment_types": {
+    "full_time": "Full Time",
+    "contract": "Contract",
+    "part_time": "Part Time"
+  },
+  "job_sources": {
+    "aggregator": "Job Board",
+    "career_page": "Career Page",
+    "google_jobs": "Google Jobs",
+    "linkedin": "LinkedIn",
+    "manual": "Pasted"
+  },
+  "errors": {
+    "generic_error": "An unexpected error occurred",
+    "network_error": "Connection error. Check your internet",
+    "not_found": "The requested resource was not found",
+    "unauthorized": "You are not authorized for this action",
+    "server_error": "Server error. Please try again later",
+    "copy_failed": "Failed to copy to clipboard"
+  },
+  "loading": {
+    "loading": "Loading...",
+    "loading_data": "Loading data...",
+    "processing": "Processing...",
+    "generating": "Generating content...",
+    "scraping": "Scraping jobs..."
+  },
+  "empty": {
+    "no_data": "No data available",
+    "no_results": "No results found",
+    "no_jobs": "No jobs found",
+    "no_cvs": "You haven't uploaded any resumes",
+    "no_applications": "You have no applications"
+  },
+  "confirm": {
+    "confirm_delete": "Are you sure you want to delete this? This action cannot be undone.",
+    "confirm_apply": "Confirm application to this job?",
+    "confirm_reset": "Reset to default values? Changes will be lost."
+  },
+  "dr_friendly": {
+    "dr_friendly": "DR Friendly",
+    "check_eligibility": "Check Eligibility"
+  },
+  "time": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "days_ago": "{{count}} days ago",
+    "weeks_ago": "{{count}} weeks ago",
+    "months_ago": "{{count}} months ago",
+    "this_week": "This week",
+    "this_month": "This month",
+    "all_time": "All time"
+  },
+  "file_types": {
+    "pdf": "PDF",
+    "docx": "DOCX",
+    "md": "Markdown"
+  },
+  "grades": {
+    "grade_a": "Excellent",
+    "grade_b": "Good",
+    "grade_c": "Average",
+    "grade_d": "Below Average",
+    "grade_f": "Failing"
+  },
+  "confirm_delete": "Are you sure you want to delete this?",
+  "unsaved_changes": "You have unsaved changes. Do you want to leave?",
+  "language": "Language",
+  "theme": "Theme",
+  "theme_light": "Light",
+  "theme_dark": "Dark",
+  "theme_system": "System",
+  "search_command": "Cmd+K",
+  "notifications": "Notifications",
+  "breadcrumb": {
+    "home": "Home",
+    "jobs": "Jobs",
+    "job_detail": "Job Detail",
+    "cv": "Resumes",
+    "cv_detail": "Resume Detail",
+    "ats_report": "ATS Report",
+    "applications": "Applications",
+    "application_detail": "Application Detail",
+    "interview_prep": "Preparation",
+    "interviews": "Interviews",
+    "settings": "Settings"
+  },
+  "version": "v0.1.0",
+  "export": {
+    "button": "Export",
+    "pdf": "PDF",
+    "docx": "Word (.docx)",
+    "md": "Markdown (.md)",
+    "exporting": "Exporting…",
+    "saved_to": "Saved to {{path}}",
+    "cancelled": "Export cancelled",
+    "failed": "Export failed: {{error}}"
+  },
+  "ollama_chip": {
+    "loaded": "Loaded and ready",
+    "idle": "Installed, not loaded (loads on first use)",
+    "loading": "Loading…",
+    "offline": "Ollama server is not running",
+    "starting": "Starting Ollama…",
+    "not_installed": "Model not installed. Download it in Settings.",
+    "unknown": "Checking…",
+    "start_server": "Start Ollama",
+    "load": "Load",
+    "unload": "Unload",
+    "settings": "Settings"
+  }
+}

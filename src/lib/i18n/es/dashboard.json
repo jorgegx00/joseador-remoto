@@ -1,0 +1,64 @@
+{
+  "welcome": "Hola, {{name}}!",
+  "welcome_generic": "Bienvenido de vuelta!",
+  "subtitle": "Aqui tienes un resumen de tu busqueda de empleo.",
+  "stats": {
+    "total_jobs": "Empleos Encontrados",
+    "applications_sent": "Postulaciones Enviadas",
+    "interviews_scheduled": "Entrevistas Programadas",
+    "offers": "Ofertas",
+    "vs_last_week": "vs semana pasada",
+    "this_week": "esta semana",
+    "next_interview": "Proxima: {{time}}",
+    "no_upcoming": "Ninguna proxima"
+  },
+  "funnel": {
+    "title": "Pipeline de Postulaciones",
+    "jobs_viewed": "Empleos Vistos",
+    "applied": "Postuladas",
+    "phone_screen": "Llamada Inicial",
+    "interviewing": "En Entrevista",
+    "offered": "Con Oferta",
+    "accepted": "Aceptadas",
+    "conversion": "{{rate}}% conversion"
+  },
+  "upcoming_interviews": {
+    "title": "Proximas Entrevistas",
+    "empty_title": "No hay entrevistas programadas",
+    "empty_description": "Busca empleos y postulate para comenzar",
+    "browse_jobs": "Buscar Empleos",
+    "prep": "Preparar",
+    "in_hours": "en {{count}} hora",
+    "in_hours_plural": "en {{count}} horas",
+    "in_minutes": "en {{count}} minuto",
+    "in_minutes_plural": "en {{count}} minutos",
+    "tomorrow": "Manana",
+    "in_days": "en {{count}} dias",
+    "today_at": "Hoy a las {{time}}",
+    "tomorrow_at": "Manana a las {{time}}"
+  },
+  "recent_jobs": {
+    "title": "Empleos DR-Friendly Recientes",
+    "view_all": "Ver Todos",
+    "empty_title": "No se encontraron empleos",
+    "empty_description": "Busca empleos para comenzar",
+    "posted": "Publicado {{date}}"
+  },
+  "ats_trend": {
+    "title": "Tendencia de Puntuacion ATS",
+    "score": "Puntuacion",
+    "date": "Fecha",
+    "empty_title": "Sin reportes ATS aun",
+    "empty_description": "Ejecuta tu primer analisis ATS para ver la tendencia de tu puntuacion",
+    "run_ats": "Ejecutar Analisis ATS",
+    "cv_version": "{{name}}"
+  },
+  "quick_actions": {
+    "title": "Acciones Rapidas",
+    "search_jobs": "Buscar Empleos",
+    "upload_cv": "Subir CV",
+    "run_ats": "Analisis ATS",
+    "view_applications": "Ver Postulaciones"
+  },
+  "loading": "Cargando panel..."
+}

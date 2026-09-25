@@ -1,0 +1,215 @@
+{
+  "title": "Postulaciones",
+  "new_application": "Nueva postulacion",
+  "view_toggle": {
+    "kanban": "Tablero Kanban",
+    "list": "Lista"
+  },
+  "status": {
+    "saved": "Guardada",
+    "applied": "Postulada",
+    "phone_screen": "Llamada inicial",
+    "interviewing": "En entrevista",
+    "technical": "Prueba tecnica",
+    "final": "Ronda final",
+    "rejected": "Rechazada",
+    "offered": "Con oferta",
+    "accepted": "Aceptada",
+    "withdrawn": "Retirada"
+  },
+  "card": {
+    "applied_ago": "Postulado hace {{count}} dias",
+    "match_score": "Match: {{score}}%",
+    "next_interview": "Entrevista {{date}}",
+    "cv_used": "CV utilizado: {{name}}"
+  },
+  "actions": {
+    "view_details": "Ver detalles",
+    "open_posting": "Abrir publicacion",
+    "interview_prep": "Preparar entrevista",
+    "archive": "Archivar"
+  },
+  "interview": {
+    "schedule_interview": "Programar entrevista",
+    "edit_interview": "Editar entrevista",
+    "interview_type": "Tipo de entrevista",
+    "date_time": "Fecha y hora",
+    "date": "Fecha",
+    "time": "Hora",
+    "hour": "Hora",
+    "minute": "Minuto",
+    "duration": "Duracion",
+    "location": "Ubicacion",
+    "meeting_url": "URL de reunion",
+    "open_link": "Abrir enlace",
+    "interviewer": "Entrevistador",
+    "interviewer_name": "Nombre del entrevistador",
+    "interviewer_role": "Rol del entrevistador",
+    "interviewer_role_placeholder": "ej. Gerente de Ingenieria",
+    "notes": "Notas",
+    "preparation_notes": "Notas de preparacion",
+    "notes_placeholder": "Agrega notas para preparacion...",
+    "feedback": "Retroalimentacion",
+    "feedback_placeholder": "Como estuvo la entrevista?",
+    "outcome": "Resultado",
+    "outcome_values": {
+      "pending": "Pendiente",
+      "passed": "Aprobada",
+      "failed": "Reprobada",
+      "cancelled": "Cancelada"
+    },
+    "save_feedback": "Guardar retroalimentacion",
+    "start_prep": "Iniciar preparacion",
+    "delete_interview": "Eliminar entrevista",
+    "delete_confirm_title": "Eliminar entrevista",
+    "delete_confirm_description": "Estas seguro de que quieres eliminar esta entrevista? Esta accion no se puede deshacer.",
+    "interview_details": "Detalles de la entrevista",
+    "application_info": "Informacion de la postulacion",
+    "post_interview": "Post-entrevista",
+    "date_required": "La fecha es requerida",
+    "type_required": "El tipo de entrevista es requerido",
+    "status_values": {
+      "scheduled": "Programada",
+      "completed": "Completada",
+      "cancelled": "Cancelada",
+      "rescheduled": "Reprogramada"
+    },
+    "type": {
+      "phone_screen": "Llamada inicial",
+      "technical": "Tecnica",
+      "behavioral": "Conductual",
+      "system_design": "Diseno de sistema",
+      "hiring_manager": "Gerente de contratacion",
+      "final": "Ronda final",
+      "take_home": "Prueba en casa"
+    },
+    "types": {
+      "phone_screen": "Llamada inicial",
+      "technical": "Tecnica",
+      "behavioral": "Conductual",
+      "system_design": "Diseno de sistema",
+      "hiring_manager": "Gerente de contratacion",
+      "final": "Entrevista final",
+      "take_home": "Prueba en casa"
+    },
+    "outcome_label": {
+      "passed": "Aprobada",
+      "failed": "Reprobada",
+      "pending": "Pendiente",
+      "cancelled": "Cancelada"
+    },
+    "status_label": {
+      "scheduled": "Programada",
+      "completed": "Completada",
+      "cancelled": "Cancelada",
+      "rescheduled": "Reprogramada"
+    },
+    "duration_option": {
+      "15": "15 min",
+      "30": "30 min",
+      "45": "45 min",
+      "60": "1 hora",
+      "90": "1.5 horas",
+      "120": "2 horas"
+    }
+  },
+  "calendar": {
+    "title": "Calendario de entrevistas",
+    "month": "Mes",
+    "week": "Semana",
+    "day": "Dia",
+    "today": "Hoy",
+    "no_interviews": "No hay entrevistas programadas",
+    "no_interviews_day": "No hay entrevistas este dia",
+    "click_to_add": "Haz clic para agregar una entrevista",
+    "interviews_count": "{{count}} entrevista(s)",
+    "day_names": {
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mie",
+      "thu": "Jue",
+      "fri": "Vie",
+      "sat": "Sab",
+      "sun": "Dom"
+    },
+    "day_names_full": {
+      "mon": "Lunes",
+      "tue": "Martes",
+      "wed": "Miercoles",
+      "thu": "Jueves",
+      "fri": "Viernes",
+      "sat": "Sabado",
+      "sun": "Domingo"
+    }
+  },
+  "detail": {
+    "job": "Empleo",
+    "company": "Empresa",
+    "applied_date": "Fecha de postulacion",
+    "status": "Estado",
+    "cv_used": "CV utilizado",
+    "view_cv": "Ver CV",
+    "notes": "Notas",
+    "interviews": "Entrevistas",
+    "no_interviews": "No hay entrevistas programadas",
+    "timeline": "Linea de tiempo",
+    "prep": "Preparacion para entrevista",
+    "glassdoor_reviews": "Opiniones en Glassdoor",
+    "delete_application": "Eliminar postulacion",
+    "deleted": "Postulacion eliminada",
+    "confirm_delete_title": "Eliminar postulacion",
+    "confirm_delete_description": "Estas seguro de que quieres eliminar esta postulacion? Esta accion no se puede deshacer."
+  },
+  "board": {
+    "title": "Tablero Kanban",
+    "drag_hint": "Arrastra para cambiar estado",
+    "moved_to": "Postulacion movida a {{status}}",
+    "closed_section": "Cerradas ({{count}})"
+  },
+  "stats": {
+    "total": "Total",
+    "active": "Activas",
+    "this_week": "Esta semana",
+    "interviews_scheduled": "Entrevistas",
+    "offers": "Ofertas",
+    "response_rate": "Tasa de respuesta",
+    "avg_response_time": "Tiempo promedio de respuesta"
+  },
+  "filters": {
+    "search_company": "Buscar por empresa o titulo...",
+    "all_statuses": "Todos los estados"
+  },
+  "timeline": {
+    "created": "Postulacion creada",
+    "application_created": "La postulacion fue guardada",
+    "status_changed": "Estado cambiado",
+    "moved_to": "Movida a {{status}}",
+    "interview_scheduled": "Entrevista programada",
+    "interview_detail": "{{type}} con {{interviewer}}",
+    "unknown_interviewer": "Por confirmar",
+    "no_events": "No hay eventos en la linea de tiempo"
+  },
+  "notes": {
+    "placeholder": "Escribe tus notas sobre esta postulacion...",
+    "char_count": "{{count}} caracteres",
+    "saving": "Guardando...",
+    "saved": "Guardado"
+  },
+  "quick_apply": {
+    "title": "Nueva postulacion",
+    "description": "Crear una nueva postulacion de empleo",
+    "select_job": "Empleo",
+    "select_job_placeholder": "Selecciona un empleo...",
+    "select_cv": "CV",
+    "select_cv_placeholder": "Selecciona un CV...",
+    "initial_status": "Estado inicial",
+    "notes": "Notas",
+    "notes_placeholder": "Notas iniciales...",
+    "primary": "Principal",
+    "created": "Postulacion creada exitosamente"
+  },
+  "no_applications": "No tienes postulaciones",
+  "empty_description": "Crea tu primera postulacion para empezar a rastrear tu busqueda de empleo",
+  "add_note": "Agregar nota",
+  "schedule_interview": "Programar entrevista"
+}

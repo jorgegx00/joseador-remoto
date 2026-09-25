@@ -1,0 +1,215 @@
+{
+  "title": "Applications",
+  "new_application": "New Application",
+  "view_toggle": {
+    "kanban": "Kanban Board",
+    "list": "List"
+  },
+  "status": {
+    "saved": "Saved",
+    "applied": "Applied",
+    "phone_screen": "Phone Screen",
+    "interviewing": "Interviewing",
+    "technical": "Technical",
+    "final": "Final Round",
+    "rejected": "Rejected",
+    "offered": "Offered",
+    "accepted": "Accepted",
+    "withdrawn": "Withdrawn"
+  },
+  "card": {
+    "applied_ago": "Applied {{count}} days ago",
+    "match_score": "Match: {{score}}%",
+    "next_interview": "Interview {{date}}",
+    "cv_used": "Resume used: {{name}}"
+  },
+  "actions": {
+    "view_details": "View Details",
+    "open_posting": "Open Posting",
+    "interview_prep": "Interview Prep",
+    "archive": "Archive"
+  },
+  "interview": {
+    "schedule_interview": "Schedule Interview",
+    "edit_interview": "Edit Interview",
+    "interview_type": "Interview Type",
+    "date_time": "Date & Time",
+    "date": "Date",
+    "time": "Time",
+    "hour": "Hour",
+    "minute": "Minute",
+    "duration": "Duration",
+    "location": "Location",
+    "meeting_url": "Meeting URL",
+    "open_link": "Open Link",
+    "interviewer": "Interviewer",
+    "interviewer_name": "Interviewer Name",
+    "interviewer_role": "Interviewer Role",
+    "interviewer_role_placeholder": "e.g. Engineering Manager",
+    "notes": "Notes",
+    "preparation_notes": "Preparation Notes",
+    "notes_placeholder": "Add notes for preparation...",
+    "feedback": "Feedback",
+    "feedback_placeholder": "How did the interview go?",
+    "outcome": "Outcome",
+    "outcome_values": {
+      "pending": "Pending",
+      "passed": "Passed",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "save_feedback": "Save Feedback",
+    "start_prep": "Start Interview Prep",
+    "delete_interview": "Delete Interview",
+    "delete_confirm_title": "Delete Interview",
+    "delete_confirm_description": "Are you sure you want to delete this interview? This action cannot be undone.",
+    "interview_details": "Interview Details",
+    "application_info": "Application Info",
+    "post_interview": "Post-Interview",
+    "date_required": "Date is required",
+    "type_required": "Interview type is required",
+    "status_values": {
+      "scheduled": "Scheduled",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "rescheduled": "Rescheduled"
+    },
+    "type": {
+      "phone_screen": "Phone Screen",
+      "technical": "Technical",
+      "behavioral": "Behavioral",
+      "system_design": "System Design",
+      "hiring_manager": "Hiring Manager",
+      "final": "Final Round",
+      "take_home": "Take-Home"
+    },
+    "types": {
+      "phone_screen": "Phone Screen",
+      "technical": "Technical",
+      "behavioral": "Behavioral",
+      "system_design": "System Design",
+      "hiring_manager": "Hiring Manager",
+      "final": "Final Interview",
+      "take_home": "Take Home"
+    },
+    "outcome_label": {
+      "passed": "Passed",
+      "failed": "Failed",
+      "pending": "Pending",
+      "cancelled": "Cancelled"
+    },
+    "status_label": {
+      "scheduled": "Scheduled",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "rescheduled": "Rescheduled"
+    },
+    "duration_option": {
+      "15": "15 min",
+      "30": "30 min",
+      "45": "45 min",
+      "60": "1 hour",
+      "90": "1.5 hours",
+      "120": "2 hours"
+    }
+  },
+  "calendar": {
+    "title": "Interview Calendar",
+    "month": "Month",
+    "week": "Week",
+    "day": "Day",
+    "today": "Today",
+    "no_interviews": "No interviews scheduled",
+    "no_interviews_day": "No interviews this day",
+    "click_to_add": "Click to add an interview",
+    "interviews_count": "{{count}} interview(s)",
+    "day_names": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
+    "day_names_full": {
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday",
+      "sun": "Sunday"
+    }
+  },
+  "detail": {
+    "job": "Job",
+    "company": "Company",
+    "applied_date": "Applied Date",
+    "status": "Status",
+    "cv_used": "Resume Used",
+    "view_cv": "View Resume",
+    "notes": "Notes",
+    "interviews": "Interviews",
+    "no_interviews": "No interviews scheduled yet",
+    "timeline": "Timeline",
+    "prep": "Interview Prep",
+    "glassdoor_reviews": "Glassdoor Reviews",
+    "delete_application": "Delete Application",
+    "deleted": "Application deleted",
+    "confirm_delete_title": "Delete Application",
+    "confirm_delete_description": "Are you sure you want to delete this application? This action cannot be undone."
+  },
+  "board": {
+    "title": "Kanban Board",
+    "drag_hint": "Drag to change status",
+    "moved_to": "Application moved to {{status}}",
+    "closed_section": "Closed ({{count}})"
+  },
+  "stats": {
+    "total": "Total",
+    "active": "Active",
+    "this_week": "This Week",
+    "interviews_scheduled": "Interviews",
+    "offers": "Offers",
+    "response_rate": "Response Rate",
+    "avg_response_time": "Avg Response Time"
+  },
+  "filters": {
+    "search_company": "Search by company or title...",
+    "all_statuses": "All Statuses"
+  },
+  "timeline": {
+    "created": "Application Created",
+    "application_created": "Application was saved",
+    "status_changed": "Status Changed",
+    "moved_to": "Moved to {{status}}",
+    "interview_scheduled": "Interview Scheduled",
+    "interview_detail": "{{type}} with {{interviewer}}",
+    "unknown_interviewer": "TBD",
+    "no_events": "No timeline events yet"
+  },
+  "notes": {
+    "placeholder": "Write your notes about this application...",
+    "char_count": "{{count}} characters",
+    "saving": "Saving...",
+    "saved": "Saved"
+  },
+  "quick_apply": {
+    "title": "New Application",
+    "description": "Create a new job application",
+    "select_job": "Job",
+    "select_job_placeholder": "Select a job...",
+    "select_cv": "Resume",
+    "select_cv_placeholder": "Select a resume...",
+    "initial_status": "Initial Status",
+    "notes": "Notes",
+    "notes_placeholder": "Any initial notes...",
+    "primary": "Primary",
+    "created": "Application created successfully"
+  },
+  "no_applications": "You have no applications",
+  "empty_description": "Create your first application to start tracking your job search",
+  "add_note": "Add Note",
+  "schedule_interview": "Schedule Interview"
+}
