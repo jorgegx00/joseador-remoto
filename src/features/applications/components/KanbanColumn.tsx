@@ -61,7 +61,7 @@ export function KanbanColumn({
 
   if (isCollapsed) {
     return (
-      <div className="min-w-[180px] flex-shrink-0">
+      <div className="min-w-[180px] max-w-[240px] flex-shrink-0">
         <div
           ref={setNodeRef}
           className={`rounded-lg border bg-muted/30 p-3 transition-colors ${
@@ -124,7 +124,9 @@ export function KanbanColumn({
           items={itemIds}
           strategy={verticalListSortingStrategy}
         >
-          <ScrollArea className="flex-1 px-3">
+          {/* Radix wraps the viewport content in a `display: table` div that grows with the
+              longest title; force block layout so cards stay column-width and truncate. */}
+          <ScrollArea className="flex-1 px-3 [&_[data-slot=scroll-area-viewport]>div]:block!">
             <div className="space-y-2 pb-2 min-h-[100px]">
               {applications.map((app) => (
                 <ApplicationCard key={app.id} application={app} />

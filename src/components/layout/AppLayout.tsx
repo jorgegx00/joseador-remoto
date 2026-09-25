@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { GlobalErrorBoundary } from "@/components/common/GlobalErrorBoundary";
 import { OnboardingWizard } from "@/components/common/OnboardingWizard";
 import { storageService } from "@/services/storage";
-import { checkAndNotifyUpcomingInterviews } from "@/lib/notifications";
+import { checkAndNotifyPendingFollowUps, checkAndNotifyUpcomingInterviews } from "@/lib/notifications";
 import { useCvStore } from "@/stores/cvStore";
 
 interface AppLayoutProps {
@@ -44,6 +44,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   // Check for upcoming interviews on mount
   useEffect(() => {
     void checkAndNotifyUpcomingInterviews();
+    void checkAndNotifyPendingFollowUps();
   }, []);
 
   // Load CVs and set the primary one as active so the match-analysis card

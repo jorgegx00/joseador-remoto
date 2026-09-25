@@ -7,7 +7,9 @@
     "strengths_weaknesses": "Fortalezas y Debilidades",
     "questions": "Preguntas",
     "checklist": "Lista de verificacion",
-    "company_brief": "Resumen de empresa"
+    "company_brief": "Resumen de empresa",
+    "round_prep": "Preparar ronda",
+    "fit": "Encaje y brechas"
   },
   "pitch": {
     "title": "Elevator Pitch",
@@ -361,7 +363,7 @@
     "regenerate": "Regenerar",
     "generating": "Generando resumen de la empresa...",
     "no_reviews": "No hay resenas disponibles",
-    "no_reviews_hint": "Primero busca resenas de entrevistas en Glassdoor para generar un informe de investigacion.",
+    "no_reviews_hint": "Ya no se recopilan reseñas de Glassdoor. Usa las pestañas \"Preparar ronda\" y \"Encaje y brechas\", basadas en la oferta y tu CV.",
     "no_llm_warning": "No hay proveedor de IA configurado. El informe usara solo datos extraidos localmente. Configura un proveedor en Ajustes para obtener analisis con IA.",
     "avg_difficulty": "Dificultad Prom.",
     "success_rate": "Tasa de Exito",
@@ -375,5 +377,99 @@
     "title": "Investigacion de la empresa",
     "brief": "Resumen de la empresa",
     "generate": "Generar investigacion"
+  },
+  "prep_ai": {
+    "no_llm": "Configura un proveedor de IA en Ajustes para generar material de preparación.",
+    "generation_failed": "No se pudo generar. Inténtalo de nuevo.",
+    "updated": "Generado {{when}}",
+    "cancel": "Cancelar",
+    "generate": "Generar",
+    "regenerate": "Regenerar",
+    "needs_input_title": "Responde esto para afinar tu preparación",
+    "needs_input_hint": "La IA no inventa cifras ni resultados. Añade estos datos a tu CV o a las notas de la entrevista y vuelve a generar.",
+    "missing_cv_or_job": "Esta aplicación necesita un CV y una oferta para generar material de preparación.",
+    "language": "Idioma del material",
+    "language_auto": "Automático ({{lang}}, según la oferta)",
+    "language_name": {
+      "en": "Inglés",
+      "es": "Español"
+    }
+  },
+  "gap_brief": {
+    "title": "Encaje y brechas",
+    "description": "Cada requisito clave de la oferta relacionado con evidencia de tu CV y cómo hablar de ello, con un enfoque honesto para las brechas.",
+    "talking_points": "Tus puntos más fuertes para este puesto",
+    "requirements": "Requisitos vs. tu experiencia",
+    "fit": {
+      "strong": "Fuerte",
+      "partial": "Parcial",
+      "missing": "Brecha"
+    },
+    "must_have": "Imprescindible",
+    "evidence": "De tu CV",
+    "remote_notes": "Conviene aclarar (remoto)",
+    "empty": "Genera el análisis de encaje para ver dónde eres fuerte y qué preparar. Los paquetes por ronda también lo usan."
+  },
+  "round_prep": {
+    "title": "Paquete de preparación para esta ronda",
+    "description": "Preguntas probables con esquemas de respuesta basados en tu experiencia, preguntas para hacerles, un plan de estudio corto y errores a evitar.",
+    "scheduled_rounds": "Rondas programadas",
+    "practice_rounds": "Prepararse para un tipo de ronda",
+    "practice": "Practicar esta ronda",
+    "empty": "Genera un paquete para esta ronda. Consejo: genera primero \"Encaje y brechas\" para que el paquete apunte a tus brechas reales.",
+    "focus": "Qué evaluará probablemente esta ronda",
+    "likely_questions": "Preguntas probables",
+    "why_asked": "Por qué lo preguntarían",
+    "study_plan": "Plan de estudio",
+    "day": "Día {{day}}",
+    "questions_to_ask": "Preguntas para hacerles",
+    "pitfalls": "Errores a evitar"
+  },
+  "mock": {
+    "open": "Practicar entrevista",
+    "title": "Entrevista de práctica",
+    "setup_title": "Configura una ronda de práctica",
+    "setup_description": "Un entrevistador IA hace una pregunta a la vez según esta oferta y tu CV. Tras cada respuesta recibes un comentario breve sobre el contenido (ejemplos, resultados, relevancia), sin puntuaciones.",
+    "round": "Ronda",
+    "questions": "Duración",
+    "questions_option": "{{count}} preguntas",
+    "language": "Idioma de la entrevista",
+    "coaching_note": "Las preguntas van en el idioma de la entrevista; los comentarios, en el idioma de la app.",
+    "start": "Empezar",
+    "past_sessions": "Sesiones anteriores",
+    "status": {
+      "active": "En curso",
+      "completed": "Completada"
+    },
+    "delete": "Eliminar sesión",
+    "progress": "pregunta {{current}} de {{total}}",
+    "end": "Terminar y ver comentarios",
+    "leave": "Cerrar",
+    "follow_up": "Repregunta",
+    "thinking": "El entrevistador está pensando…",
+    "writing_report": "Escribiendo tus comentarios…",
+    "stalled": "Tu respuesta está guardada, pero el siguiente paso no terminó.",
+    "retry": "Reintentar",
+    "answer_placeholder": "Responde como lo harías en voz alta. Los ejemplos concretos valen más que la forma.",
+    "send_hint": "Ctrl + Enter para enviar",
+    "send": "Enviar respuesta",
+    "report_title": "Cómo te fue",
+    "strengths": "Lo que transmitiste bien",
+    "recurring_gaps": "Qué trabajar",
+    "stories_to_prepare": "Historias que vale la pena escribir",
+    "add_story": "Añadir al banco STAR",
+    "story_added": "Añadida a tus historias STAR. Completa los detalles en la pestaña STAR.",
+    "story_added_short": "Añadida",
+    "review_topics": "Temas para repasar",
+    "again": "Practicar otra vez",
+    "check": {
+      "evidence": "Ejemplo concreto",
+      "result": "Resultado claro",
+      "relevance": "Relevante para el puesto"
+    },
+    "worked": "Funcionó",
+    "improve": "Prueba",
+    "cv_fact": "De tu CV podrías mencionar",
+    "stronger_opening": "Mejor comienzo"
   }
 }

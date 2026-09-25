@@ -4,8 +4,9 @@ import { eq, and, or, ne, desc, asc, like, sql, inArray, notInArray } from "driz
 import { ulid } from "ulid";
 import * as schema from "@/db/schema";
 import { jobMatchesTagFilters } from "@/features/jobs/utils/jobTaxonomy";
-import type { Job, JobSource, Company, CvRecord, NewCvRecord, ParsedCv, Application, Interview, AtsReport, GeneratedCv, ScrapeRun, CoverLetter } from "@/types";
+import type { Job, JobSource, Company, CvRecord, NewCvRecord, ParsedCv, Application, ApplicationEvent, Interview, AtsReport, GeneratedCv, ScrapeRun, CoverLetter } from "@/types";
 import type { StarStory, InterviewPrep, GlassdoorInterviewReview, MatchAnalysisRecord, MatchAnalysis } from "@/types";
+import type { MockSession, PrepDocument, PrepDocumentKind } from "@/types";
 
 // --------------------------------------------------------------------------
 // Drizzle sqlite-proxy bridge
@@ -166,6 +167,49 @@ export async function runMigrations(): Promise<void> {
     `CREATE INDEX IF NOT EXISTS idx_interviews_application_id ON interviews (application_id)`,
     `CREATE INDEX IF NOT EXISTS idx_interviews_scheduled_at ON interviews (scheduled_at)`,
     `CREATE INDEX IF NOT EXISTS idx_interviews_status ON interviews (status)`,
+
+    // --- application_events (status history, messages sent, notes) ---
+    `CREATE TABLE IF NOT EXISTS application_events (
+      id TEXT PRIMARY KEY,
+      application_id TEXT NOT NULL REFERENCES applications(id),
+      type TEXT NOT NULL,
+      from_status TEXT,
+      to_status TEXT,
+      payload TEXT,
+      created_at INTEGER NOT NULL
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_application_events_application_id ON application_events (application_id)`,
+
+    // --- prep_documents (LLM gap brief / round prep packs) ---
+    `CREATE TABLE IF NOT EXISTS prep_documents (
+      id TEXT PRIMARY KEY,
+      application_id TEXT NOT NULL REFERENCES applications(id),
+      interview_id TEXT NOT NULL DEFAULT '',
+      kind TEXT NOT NULL,
+      language TEXT NOT NULL,
+      content TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_prep_documents_application_id ON prep_documents (application_id)`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_prep_documents_unique ON prep_documents (application_id, interview_id, kind)`,
+
+    // --- mock_sessions (practice interviews) ---
+    `CREATE TABLE IF NOT EXISTS mock_sessions (
+      id TEXT PRIMARY KEY,
+      application_id TEXT NOT NULL REFERENCES applications(id),
+      interview_id TEXT NOT NULL DEFAULT '',
+      interview_type TEXT NOT NULL,
+      language TEXT NOT NULL,
+      coaching_language TEXT NOT NULL,
+      total_questions INTEGER NOT NULL,
+      turns TEXT NOT NULL,
+      report TEXT,
+      status TEXT NOT NULL DEFAULT 'active',
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_mock_sessions_application_id ON mock_sessions (application_id)`,
 
     // --- glassdoor_reviews ---
     `CREATE TABLE IF NOT EXISTS glassdoor_reviews (
@@ -365,6 +409,11 @@ export async function runMigrations(): Promise<void> {
     // CV or job text changed after it was computed.
     { sql: `ALTER TABLE match_analyses ADD COLUMN cv_fingerprint TEXT` },
     { sql: `ALTER TABLE match_analyses ADD COLUMN job_fingerprint TEXT` },
+    // Follow-up tracking for the application pipeline.
+    { sql: `ALTER TABLE applications ADD COLUMN last_contact_at INTEGER` },
+    { sql: `ALTER TABLE applications ADD COLUMN snoozed_until INTEGER` },
+    { sql: `ALTER TABLE applications ADD COLUMN closed_reason TEXT` },
+    { sql: `ALTER TABLE interviews ADD COLUMN interviewer_timezone TEXT` },
   ];
   for (const { sql: alterSql, index } of additive) {
     try {
@@ -982,17 +1031,40 @@ export async function insertApplication(app: Omit<Application, "created_at" | "u
     status: app.status,
     applied_at: app.applied_at,
     notes: app.notes,
+    last_contact_at: app.last_contact_at,
+    snoozed_until: app.snoozed_until,
+    closed_reason: app.closed_reason,
     created_at: now,
     updated_at: now,
   });
 }
 
+/**
+ * Sets the status. Moving to "applied" stamps applied_at the first time only, so
+ * dragging a card back and forth never resets the follow-up clock.
+ */
 export async function updateApplicationStatus(id: string, status: string): Promise<void> {
   const now = Date.now();
   await db
     .update(schema.applications)
-    .set({ status, updated_at: now })
+    .set({
+      status,
+      updated_at: now,
+      ...(status === "applied" ? { applied_at: sql`COALESCE(${schema.applications.applied_at}, ${now})` } : {}),
+    })
     .where(eq(schema.applications.id, id));
+}
+
+export async function updateApplicationFields(
+  id: string,
+  data: Partial<Pick<Application, "applied_at" | "last_contact_at" | "snoozed_until" | "closed_reason">>,
+): Promise<void> {
+  const updateSet: Record<string, unknown> = { updated_at: Date.now() };
+  if (data.applied_at !== undefined) updateSet.applied_at = data.applied_at;
+  if (data.last_contact_at !== undefined) updateSet.last_contact_at = data.last_contact_at;
+  if (data.snoozed_until !== undefined) updateSet.snoozed_until = data.snoozed_until;
+  if (data.closed_reason !== undefined) updateSet.closed_reason = data.closed_reason;
+  await db.update(schema.applications).set(updateSet).where(eq(schema.applications.id, id));
 }
 
 export async function updateApplicationNotes(id: string, notes: string): Promise<void> {
@@ -1004,6 +1076,12 @@ export async function updateApplicationNotes(id: string, notes: string): Promise
 }
 
 export async function deleteApplication(id: string): Promise<void> {
+  // Children first: sqlx enables foreign_keys, so a parent delete would be rejected.
+  await db.delete(schema.applicationEvents).where(eq(schema.applicationEvents.application_id, id));
+  await db.delete(schema.interviews).where(eq(schema.interviews.application_id, id));
+  await db.delete(schema.interviewPreps).where(eq(schema.interviewPreps.application_id, id));
+  await db.delete(schema.prepDocuments).where(eq(schema.prepDocuments.application_id, id));
+  await db.delete(schema.mockSessions).where(eq(schema.mockSessions.application_id, id));
   await db.delete(schema.applications).where(eq(schema.applications.id, id));
 }
 
@@ -1016,8 +1094,56 @@ function mapApplication(row: typeof schema.applications.$inferSelect): Applicati
     status: row.status as Application["status"],
     applied_at: row.applied_at ?? null,
     notes: row.notes ?? "",
+    last_contact_at: row.last_contact_at ?? null,
+    snoozed_until: row.snoozed_until ?? null,
+    closed_reason: (row.closed_reason ?? null) as Application["closed_reason"],
     created_at: row.created_at,
     updated_at: row.updated_at,
+  };
+}
+
+// --------------------------------------------------------------------------
+// Application event helpers
+// --------------------------------------------------------------------------
+
+export async function getApplicationEvents(applicationId: string): Promise<ApplicationEvent[]> {
+  const rows = await db
+    .select()
+    .from(schema.applicationEvents)
+    .where(eq(schema.applicationEvents.application_id, applicationId))
+    .orderBy(asc(schema.applicationEvents.created_at));
+  return rows.map(mapApplicationEvent);
+}
+
+export async function getAllApplicationEvents(): Promise<ApplicationEvent[]> {
+  const rows = await db
+    .select()
+    .from(schema.applicationEvents)
+    .orderBy(asc(schema.applicationEvents.created_at));
+  return rows.map(mapApplicationEvent);
+}
+
+export async function insertApplicationEvent(event: ApplicationEvent): Promise<void> {
+  await db.insert(schema.applicationEvents).values({
+    id: event.id,
+    application_id: event.application_id,
+    type: event.type,
+    from_status: event.from_status,
+    to_status: event.to_status,
+    payload: JSON.stringify(event.payload),
+    created_at: event.created_at,
+  });
+}
+
+function mapApplicationEvent(row: typeof schema.applicationEvents.$inferSelect): ApplicationEvent {
+  return {
+    id: row.id,
+    application_id: row.application_id,
+    type: row.type as ApplicationEvent["type"],
+    from_status: (row.from_status ?? null) as ApplicationEvent["from_status"],
+    to_status: (row.to_status ?? null) as ApplicationEvent["to_status"],
+    payload: safeJsonParse<ApplicationEvent["payload"]>(row.payload, {}),
+    created_at: row.created_at,
   };
 }
 
@@ -1056,6 +1182,7 @@ export async function insertInterview(interview: Omit<Interview, "created_at" | 
     meeting_url: interview.meeting_url,
     interviewer_name: interview.interviewer_name,
     interviewer_role: interview.interviewer_role,
+    interviewer_timezone: interview.interviewer_timezone,
     notes: interview.notes,
     feedback: interview.feedback,
     outcome: interview.outcome,
@@ -1075,6 +1202,7 @@ export async function updateInterview(id: string, data: Partial<Interview>): Pro
   if (data.meeting_url !== undefined) updateSet.meeting_url = data.meeting_url;
   if (data.interviewer_name !== undefined) updateSet.interviewer_name = data.interviewer_name;
   if (data.interviewer_role !== undefined) updateSet.interviewer_role = data.interviewer_role;
+  if (data.interviewer_timezone !== undefined) updateSet.interviewer_timezone = data.interviewer_timezone;
   if (data.notes !== undefined) updateSet.notes = data.notes;
   if (data.feedback !== undefined) updateSet.feedback = data.feedback;
   if (data.outcome !== undefined) updateSet.outcome = data.outcome;
@@ -1084,7 +1212,132 @@ export async function updateInterview(id: string, data: Partial<Interview>): Pro
 }
 
 export async function deleteInterview(id: string): Promise<void> {
+  await db.delete(schema.prepDocuments).where(eq(schema.prepDocuments.interview_id, id));
   await db.delete(schema.interviews).where(eq(schema.interviews.id, id));
+}
+
+// --------------------------------------------------------------------------
+// Prep document helpers (gap brief, round packs)
+// --------------------------------------------------------------------------
+
+export async function getPrepDocument<T>(
+  applicationId: string,
+  kind: PrepDocumentKind,
+  interviewId = "",
+): Promise<PrepDocument<T> | null> {
+  const rows = await db
+    .select()
+    .from(schema.prepDocuments)
+    .where(
+      and(
+        eq(schema.prepDocuments.application_id, applicationId),
+        eq(schema.prepDocuments.interview_id, interviewId),
+        eq(schema.prepDocuments.kind, kind),
+      ),
+    )
+    .limit(1);
+  return rows.length > 0 ? mapPrepDocument<T>(rows[0]) : null;
+}
+
+export async function upsertPrepDocument<T>(
+  doc: Omit<PrepDocument<T>, "id" | "created_at" | "updated_at">,
+): Promise<PrepDocument<T>> {
+  const now = Date.now();
+  const id = ulid();
+  const content = JSON.stringify(doc.content);
+  await db
+    .insert(schema.prepDocuments)
+    .values({
+      id,
+      application_id: doc.application_id,
+      interview_id: doc.interview_id,
+      kind: doc.kind,
+      language: doc.language,
+      content,
+      created_at: now,
+      updated_at: now,
+    })
+    .onConflictDoUpdate({
+      target: [schema.prepDocuments.application_id, schema.prepDocuments.interview_id, schema.prepDocuments.kind],
+      set: { language: doc.language, content, updated_at: now },
+    });
+  return (await getPrepDocument<T>(doc.application_id, doc.kind, doc.interview_id))!;
+}
+
+function mapPrepDocument<T>(row: typeof schema.prepDocuments.$inferSelect): PrepDocument<T> {
+  return {
+    id: row.id,
+    application_id: row.application_id,
+    interview_id: row.interview_id,
+    kind: row.kind as PrepDocumentKind,
+    language: row.language === "es" ? "es" : "en",
+    content: safeJsonParse<T>(row.content, null as T),
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+// --------------------------------------------------------------------------
+// Mock interview helpers
+// --------------------------------------------------------------------------
+
+export async function getMockSessionsByApplicationId(applicationId: string): Promise<MockSession[]> {
+  const rows = await db
+    .select()
+    .from(schema.mockSessions)
+    .where(eq(schema.mockSessions.application_id, applicationId))
+    .orderBy(desc(schema.mockSessions.created_at));
+  return rows.map(mapMockSession);
+}
+
+export async function getMockSessionById(id: string): Promise<MockSession | null> {
+  const rows = await db.select().from(schema.mockSessions).where(eq(schema.mockSessions.id, id)).limit(1);
+  return rows.length > 0 ? mapMockSession(rows[0]) : null;
+}
+
+export async function saveMockSession(session: MockSession): Promise<void> {
+  const values = {
+    id: session.id,
+    application_id: session.application_id,
+    interview_id: session.interview_id,
+    interview_type: session.interview_type,
+    language: session.language,
+    coaching_language: session.coaching_language,
+    total_questions: session.total_questions,
+    turns: JSON.stringify(session.turns),
+    report: session.report ? JSON.stringify(session.report) : null,
+    status: session.status,
+    created_at: session.created_at,
+    updated_at: Date.now(),
+  };
+  await db
+    .insert(schema.mockSessions)
+    .values(values)
+    .onConflictDoUpdate({
+      target: schema.mockSessions.id,
+      set: { turns: values.turns, report: values.report, status: values.status, updated_at: values.updated_at },
+    });
+}
+
+export async function deleteMockSession(id: string): Promise<void> {
+  await db.delete(schema.mockSessions).where(eq(schema.mockSessions.id, id));
+}
+
+function mapMockSession(row: typeof schema.mockSessions.$inferSelect): MockSession {
+  return {
+    id: row.id,
+    application_id: row.application_id,
+    interview_id: row.interview_id,
+    interview_type: row.interview_type as MockSession["interview_type"],
+    language: row.language === "es" ? "es" : "en",
+    coaching_language: row.coaching_language === "es" ? "es" : "en",
+    total_questions: row.total_questions,
+    turns: safeJsonParse<MockSession["turns"]>(row.turns, []),
+    report: safeJsonParse<MockSession["report"]>(row.report, null),
+    status: row.status === "completed" ? "completed" : "active",
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
 }
 
 function mapInterview(row: typeof schema.interviews.$inferSelect): Interview {
@@ -1098,6 +1351,7 @@ function mapInterview(row: typeof schema.interviews.$inferSelect): Interview {
     meeting_url: row.meeting_url ?? "",
     interviewer_name: row.interviewer_name ?? "",
     interviewer_role: row.interviewer_role ?? "",
+    interviewer_timezone: row.interviewer_timezone ?? "",
     notes: row.notes ?? "",
     feedback: row.feedback ?? "",
     outcome: (row.outcome ?? "pending") as Interview["outcome"],

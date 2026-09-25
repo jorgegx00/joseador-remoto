@@ -1,6 +1,7 @@
 import { toast } from "sonner";
 import { sendNotification } from "@/services/notifications";
-import { getAllInterviews } from "@/services/database";
+import { getAllApplicationEvents, getAllApplications, getAllInterviews } from "@/services/database";
+import { computeAllActions } from "@/lib/applications/follow-up-rules";
 import type { Interview } from "@/types";
 import i18n from "@/lib/i18n";
 
@@ -130,5 +131,32 @@ export async function checkAndNotifyUpcomingInterviews(): Promise<void> {
     }
   } catch (error) {
     console.error("[notifications] Failed to check upcoming interviews:", error);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// checkAndNotifyPendingFollowUps — one gentle nudge per app launch
+// ---------------------------------------------------------------------------
+
+export async function checkAndNotifyPendingFollowUps(): Promise<void> {
+  try {
+    const [applications, interviews, events] = await Promise.all([
+      getAllApplications(),
+      getAllInterviews(),
+      getAllApplicationEvents(),
+    ]);
+    const now = Date.now();
+    const pending = computeAllActions(applications, interviews, events, now).filter(
+      (a) => (a.kind === "follow_up" || a.kind === "thank_you") && a.due_at <= now,
+    );
+    if (pending.length === 0) return;
+
+    const t = i18n.getFixedT(null, "onboarding");
+    const title = t("notifications.follow_ups_title");
+    const body = t("notifications.follow_ups_body", { count: pending.length });
+    toast.info(body, { duration: 8000 });
+    void sendNotification(title, body);
+  } catch (error) {
+    console.error("[notifications] Failed to check follow-ups:", error);
   }
 }

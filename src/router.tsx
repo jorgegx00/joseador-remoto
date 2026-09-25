@@ -14,6 +14,8 @@ import { AtsReportPage } from "@/pages/cv/AtsReportPage";
 import { ApplicationsPage } from "@/pages/applications/ApplicationsPage";
 import { ApplicationDetailPage } from "@/pages/applications/ApplicationDetailPage";
 import { InterviewPrepPage } from "@/pages/applications/InterviewPrepPage";
+import { MockInterviewPage } from "@/pages/applications/MockInterviewPage";
+import type { InterviewType } from "@/types";
 import { CalendarPage } from "@/pages/interviews/CalendarPage";
 import { ReportsPage } from "@/pages/reports/ReportsPage";
 import { SettingsPage } from "@/pages/settings/SettingsPage";
@@ -95,10 +97,45 @@ const applicationDetailRoute = createRoute({
   component: ApplicationDetailPage,
 });
 
+export interface PrepSearch {
+  /** Interview (round) to focus the prep on. */
+  interview?: string;
+}
+
 const interviewPrepRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/applications/$appId/prep",
   component: InterviewPrepPage,
+  validateSearch: (search: Record<string, unknown>): PrepSearch => ({
+    interview: typeof search.interview === "string" ? search.interview : undefined,
+  }),
+});
+
+const INTERVIEW_TYPES: InterviewType[] = [
+  "phone_screen",
+  "technical",
+  "behavioral",
+  "system_design",
+  "hiring_manager",
+  "final",
+  "take_home",
+];
+
+export interface MockSearch {
+  /** Scheduled round to practice for. */
+  interview?: string;
+  /** Round type to practice when no round is scheduled. */
+  type?: InterviewType;
+}
+
+const mockInterviewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/applications/$appId/mock",
+  component: MockInterviewPage,
+  validateSearch: (search: Record<string, unknown>): MockSearch => ({
+    interview: typeof search.interview === "string" ? search.interview : undefined,
+    type: INTERVIEW_TYPES.includes(search.type as InterviewType) ? (search.type as InterviewType) : undefined,
+  }),
 });
 
 const interviewsRoute = createRoute({
@@ -159,6 +196,7 @@ const routeTree = rootRoute.addChildren([
   applicationsRoute,
   applicationDetailRoute,
   interviewPrepRoute,
+  mockInterviewRoute,
   interviewsRoute,
   reportsRoute,
   settingsRoute,

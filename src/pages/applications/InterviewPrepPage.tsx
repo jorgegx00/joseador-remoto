@@ -1,9 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams, Link } from "@tanstack/react-router";
+import { useParams, useSearch, Link } from "@tanstack/react-router";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft,
@@ -13,72 +19,46 @@ import {
   HelpCircle,
   CheckSquare,
   Building2,
+  Target,
+  ListChecks,
+  Languages,
 } from "lucide-react";
-import { getApplicationById, getJobById, getCvById, getCompanyById } from "@/services/database";
 import { useCvStore } from "@/stores/cvStore";
+import { resolveMaterialLanguage, type MaterialLanguage } from "@/lib/llm/language";
+import { useApplicationPrepData } from "@/features/interview-prep/hooks/useApplicationPrepData";
+import { useGlassdoorReviews } from "@/features/interview-prep/hooks/useGlassdoorReviews";
+import { GapBriefPanel } from "@/features/interview-prep/components/GapBriefPanel";
+import { RoundPrepPanel } from "@/features/interview-prep/components/RoundPrepPanel";
+import { CompanyBrief } from "@/features/interview-prep/components/CompanyBrief";
+import { GlassdoorReviews } from "@/features/interview-prep/components/GlassdoorReviews";
 import { PitchBuilder } from "@/features/interview-prep/components/PitchBuilder";
 import { StarStoryBank } from "@/features/interview-prep/components/StarStoryBank";
 import { StrengthsWeaknesses } from "@/features/interview-prep/components/StrengthsWeaknesses";
 import { QuestionsBank } from "@/features/interview-prep/components/QuestionsBank";
 import { InterviewChecklist } from "@/features/interview-prep/components/InterviewChecklist";
-import type { Application, Job, CvRecord, Company } from "@/types";
-
 export function InterviewPrepPage() {
-  const { t } = useTranslation("interview-prep");
+  const { t, i18n } = useTranslation("interview-prep");
   const { appId } = useParams({ from: "/applications/$appId/prep" });
+  const search = useSearch({ from: "/applications/$appId/prep" });
 
-  const [application, setApplication] = useState<Application | null>(null);
-  const [job, setJob] = useState<Job | null>(null);
-  const [company, setCompany] = useState<Company | null>(null);
-  const [appCv, setAppCv] = useState<CvRecord | null>(null);
-  const [isLoadingData, setIsLoadingData] = useState(true);
+  const { application, job, company, cv: appCv, interviews } = useApplicationPrepData(appId);
   const [selectedCvId, setSelectedCvId] = useState<string | null>(null);
+  const [languageOverride, setLanguageOverride] = useState<"auto" | MaterialLanguage>("auto");
 
   const cvs = useCvStore((s) => s.cvs);
   const fetchCvs = useCvStore((s) => s.fetchCvs);
+  const { reviews } = useGlassdoorReviews(company?.id ?? "");
 
-  // Load application data on mount
   useEffect(() => {
-    let cancelled = false;
+    void fetchCvs();
+  }, [fetchCvs]);
 
-    async function load() {
-      setIsLoadingData(true);
-      try {
-        const [app, allCvsResult] = await Promise.all([
-          getApplicationById(appId),
-          fetchCvs(),
-        ]);
-        if (cancelled) return;
+  useEffect(() => {
+    if (application) setSelectedCvId((cur) => cur ?? application.cv_id);
+  }, [application]);
 
-        setApplication(app);
-
-        if (app) {
-          const [jobData, cvData] = await Promise.all([
-            getJobById(app.job_id),
-            getCvById(app.cv_id),
-          ]);
-          if (cancelled) return;
-          setJob(jobData);
-          setAppCv(cvData);
-          setSelectedCvId(app.cv_id);
-
-          if (jobData) {
-            const companyData = await getCompanyById(jobData.company_id);
-            if (!cancelled) setCompany(companyData);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to load interview prep data:", err);
-      } finally {
-        if (!cancelled) setIsLoadingData(false);
-      }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [appId, fetchCvs]);
+  const autoLanguage = resolveMaterialLanguage(job, i18n.language);
+  const language = languageOverride === "auto" ? autoLanguage : languageOverride;
 
   const parsedCv = useMemo(() => {
     const cv = cvs.find((c) => c.id === selectedCvId) ?? appCv;
@@ -107,14 +87,51 @@ export function InterviewPrepPage() {
             {job && (
               <p className="text-sm text-muted-foreground">
                 {job.title}
+                {company?.name ? ` · ${company.name}` : ""}
               </p>
             )}
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <Languages className="h-4 w-4 text-muted-foreground" />
+            <Select
+              value={languageOverride}
+              onValueChange={(v) => setLanguageOverride(v as typeof languageOverride)}
+            >
+              <SelectTrigger className="h-8 w-[190px]" aria-label={t("prep_ai.language")}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">
+                  {t("prep_ai.language_auto", { lang: t(`prep_ai.language_name.${autoLanguage}`) })}
+                </SelectItem>
+                <SelectItem value="en">{t("prep_ai.language_name.en")}</SelectItem>
+                <SelectItem value="es">{t("prep_ai.language_name.es")}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Link
+              to="/applications/$appId/mock"
+              params={{ appId }}
+              search={search.interview ? { interview: search.interview } : {}}
+            >
+              <Button size="sm">
+                <Mic className="h-4 w-4 mr-2" />
+                {t("mock.open")}
+              </Button>
+            </Link>
           </div>
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="pitch">
-          <TabsList className="grid w-full grid-cols-6">
+        <Tabs defaultValue="round">
+          <TabsList className="flex h-auto w-full flex-wrap justify-start">
+            <TabsTrigger value="round" className="flex items-center gap-1.5">
+              <ListChecks className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{t("tabs.round_prep")}</span>
+            </TabsTrigger>
+            <TabsTrigger value="fit" className="flex items-center gap-1.5">
+              <Target className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{t("tabs.fit")}</span>
+            </TabsTrigger>
             <TabsTrigger value="pitch" className="flex items-center gap-1.5">
               <Mic className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t("tabs.pitch")}</span>
@@ -156,6 +173,22 @@ export function InterviewPrepPage() {
             </TabsTrigger>
           </TabsList>
 
+          <TabsContent value="round" className="mt-4">
+            <RoundPrepPanel
+              applicationId={appId}
+              cvId={selectedCvId}
+              cv={parsedCv}
+              job={job}
+              interviews={interviews}
+              initialInterviewId={search.interview}
+              language={language}
+            />
+          </TabsContent>
+
+          <TabsContent value="fit" className="mt-4">
+            <GapBriefPanel applicationId={appId} cv={parsedCv} job={job} language={language} />
+          </TabsContent>
+
           {/* Pitch Tab */}
           <TabsContent value="pitch" className="mt-4">
             <PitchBuilder cv={parsedCv} applicationId={appId} />
@@ -193,21 +226,18 @@ export function InterviewPrepPage() {
             <InterviewChecklist applicationId={appId} />
           </TabsContent>
 
-          {/* Company Brief - Coming Soon */}
-          <TabsContent value="company" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  {t("company_brief.title")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-sm">
-                  {t("coming_soon")}
-                </p>
-              </CardContent>
-            </Card>
+          {/* Company brief from stored Glassdoor interview reviews (legacy data) */}
+          <TabsContent value="company" className="mt-4 space-y-6">
+            <CompanyBrief
+              companyName={company?.name ?? ""}
+              companyId={company?.id ?? ""}
+              jobTitle={job?.title ?? ""}
+              reviews={reviews}
+              jobId={job?.id}
+            />
+            {company && reviews.length > 0 && (
+              <GlassdoorReviews companyId={company.id} companyName={company.name} />
+            )}
           </TabsContent>
         </Tabs>
       </div>

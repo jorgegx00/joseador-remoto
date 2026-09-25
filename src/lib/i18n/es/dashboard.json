@@ -20,7 +20,8 @@
     "interviewing": "En Entrevista",
     "offered": "Con Oferta",
     "accepted": "Aceptadas",
-    "conversion": "{{rate}}% conversion"
+    "conversion": "{{rate}}% conversion",
+    "rates": "{{response}}% recibió respuesta (lo típico ≈ {{benchResponse}}%) · {{interview}}% llegó a entrevista (lo típico ≈ {{benchInterview}}%)"
   },
   "upcoming_interviews": {
     "title": "Proximas Entrevistas",
@@ -60,5 +61,37 @@
     "run_ats": "Analisis ATS",
     "view_applications": "Ver Postulaciones"
   },
-  "loading": "Cargando panel..."
+  "loading": "Cargando panel...",
+  "actions_list": {
+    "title": "Próximos pasos",
+    "subtitle_one": "{{count}} cosa que vale la pena hacer",
+    "subtitle_other": "{{count}} cosas que vale la pena hacer",
+    "subtitle_empty": "Aquí aparecen seguimientos, agradecimientos y preparación",
+    "empty": "Estás al día. Nada requiere tu atención ahora mismo.",
+    "bucket": {
+      "attention": "Pendiente",
+      "today": "Hoy",
+      "week": "Esta semana"
+    },
+    "kind": {
+      "follow_up": "Dar seguimiento a {{company}}",
+      "thank_you": "Enviar agradecimiento a {{company}}",
+      "prepare": "Preparar: {{round}} en {{company}}",
+      "take_home_due": "Entrega de prueba técnica para {{company}}",
+      "maybe_ghosted": "Sin respuesta de {{company}} en 3 semanas"
+    },
+    "open_prep": "Preparar",
+    "draft": "Redactar",
+    "mark_sent": "Marcar como enviado",
+    "marked_sent": "Marcado como enviado",
+    "heard_back": "Me respondieron",
+    "heard_back_done": "Anotado. Se reinició el conteo de seguimiento.",
+    "snooze_3d": "Recordarme en 3 días",
+    "snooze_week": "Esperar otra semana",
+    "snoozed": "Pospuesto",
+    "mark_ghosted": "Cerrar por falta de respuesta",
+    "closed_ghosted": "Cerrada por falta de respuesta. El silencio es un dato, no un juicio sobre ti.",
+    "view_application": "Ver aplicación",
+    "more": "Más acciones"
+  }
 }

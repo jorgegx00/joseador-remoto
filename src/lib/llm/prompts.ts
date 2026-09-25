@@ -3,7 +3,7 @@ import type { ParsedCv, Job } from "@/types";
 // ---------------------------------------------------------------------------
 // Helper: format a CV into a readable text block for prompts
 // ---------------------------------------------------------------------------
-function formatCvForPrompt(cv: ParsedCv): string {
+export function formatCvForPrompt(cv: ParsedCv): string {
   const lines: string[] = [];
 
   lines.push(`## Candidate Profile`);
@@ -110,7 +110,7 @@ function formatCvForPrompt(cv: ParsedCv): string {
 // ---------------------------------------------------------------------------
 // Helper: format a job posting into a readable text block for prompts
 // ---------------------------------------------------------------------------
-function formatJobForPrompt(job: Job): string {
+export function formatJobForPrompt(job: Job): string {
   const lines: string[] = [];
 
   lines.push(`## Job Posting`);

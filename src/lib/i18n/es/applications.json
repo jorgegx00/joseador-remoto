@@ -27,7 +27,8 @@
     "view_details": "Ver detalles",
     "open_posting": "Abrir publicacion",
     "interview_prep": "Preparar entrevista",
-    "archive": "Archivar"
+    "archive": "Archivar",
+    "more": "Más acciones"
   },
   "interview": {
     "schedule_interview": "Programar entrevista",
@@ -111,7 +112,19 @@
       "60": "1 hora",
       "90": "1.5 horas",
       "120": "2 horas"
-    }
+    },
+    "save_failed": "No se pudo guardar la entrevista. Inténtalo de nuevo.",
+    "interviewer_timezone": "Zona horaria del entrevistador",
+    "timezone_unknown": "Desconocida / igual a la mía",
+    "timezone_yours": "la tuya",
+    "their_time": "Su hora: {{time}}",
+    "their_time_short": "{{time}} en {{city}}",
+    "scheduled": "Entrevista programada",
+    "scheduled_and_moved": "Entrevista programada — aplicación movida a {{status}}",
+    "prepare": "Prepararme",
+    "add_to_calendar": "Añadir al calendario",
+    "ics_saved": "Archivo de calendario guardado. Ábrelo para añadir el evento.",
+    "mark_completed": "Marcar como completada"
   },
   "calendar": {
     "title": "Calendario de entrevistas",
@@ -158,7 +171,8 @@
     "delete_application": "Eliminar postulacion",
     "deleted": "Postulacion eliminada",
     "confirm_delete_title": "Eliminar postulacion",
-    "confirm_delete_description": "Estas seguro de que quieres eliminar esta postulacion? Esta accion no se puede deshacer."
+    "confirm_delete_description": "Estas seguro de que quieres eliminar esta postulacion? Esta accion no se puede deshacer.",
+    "practice": "Practicar entrevista"
   },
   "board": {
     "title": "Tablero Kanban",
@@ -187,7 +201,15 @@
     "interview_scheduled": "Entrevista programada",
     "interview_detail": "{{type}} con {{interviewer}}",
     "unknown_interviewer": "Por confirmar",
-    "no_events": "No hay eventos en la linea de tiempo"
+    "no_events": "No hay eventos en la linea de tiempo",
+    "marked_ghosted": "Cerrada — sin respuesta (ghosting)",
+    "interview_completed": "Entrevista completada",
+    "message_sent": {
+      "follow_up": "Seguimiento enviado",
+      "thank_you": "Nota de agradecimiento enviada",
+      "withdraw": "Mensaje de retiro enviado",
+      "accept": "Mensaje de aceptación enviado"
+    }
   },
   "notes": {
     "placeholder": "Escribe tus notas sobre esta postulacion...",
@@ -211,5 +233,41 @@
   "no_applications": "No tienes postulaciones",
   "empty_description": "Crea tu primera postulacion para empezar a rastrear tu busqueda de empleo",
   "add_note": "Agregar nota",
-  "schedule_interview": "Programar entrevista"
+  "schedule_interview": "Programar entrevista",
+  "closed_reason": {
+    "ghosted": "Sin respuesta",
+    "rejected": "Rechazada",
+    "withdrew": "Me retiré",
+    "declined": "Oferta rechazada"
+  },
+  "drafts": {
+    "open": "Redactar un mensaje",
+    "no_llm": "Configura un proveedor de IA en Ajustes para redactar mensajes.",
+    "failed": "No se pudo redactar el mensaje.",
+    "copy_failed": "No se pudo copiar al portapapeles.",
+    "marked_sent": "Marcado como enviado",
+    "title": {
+      "follow_up": "Mensaje de seguimiento",
+      "thank_you": "Nota de agradecimiento",
+      "withdraw": "Retirarme del proceso",
+      "accept": "Aceptar la oferta"
+    },
+    "kinds": {
+      "follow_up": "Seguimiento",
+      "thank_you": "Agradecimiento",
+      "withdraw": "Retirarme",
+      "accept": "Aceptar oferta"
+    },
+    "description": "Un borrador corto basado en la oferta y tu CV. Edítalo, envíalo desde tu correo y márcalo como enviado para que los recordatorios sigan siendo precisos.",
+    "kind": "Mensaje",
+    "language": "Idioma",
+    "generating": "Redactando…",
+    "subject": "Asunto",
+    "body": "Mensaje",
+    "review_hint": "Léelo antes de enviarlo y añade algo personal de la conversación.",
+    "regenerate": "Regenerar",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "mark_sent": "Marcar como enviado"
+  }
 }

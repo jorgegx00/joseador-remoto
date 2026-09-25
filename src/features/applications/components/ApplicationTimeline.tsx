@@ -14,13 +14,17 @@ import {
   XCircle,
   LogOut,
   Calendar,
+  Mail,
+  CircleCheck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { Application, ApplicationStatus, Interview } from "@/types";
+import type { Application, ApplicationEvent, ApplicationStatus, Interview } from "@/types";
 
 interface ApplicationTimelineProps {
   application: Application;
   interviews: Interview[];
+  /** Recorded history; applications created before it existed fall back to a reconstruction. */
+  events?: ApplicationEvent[];
 }
 
 interface TimelineEvent {
@@ -62,6 +66,7 @@ const STATUS_DOT_COLORS: Record<ApplicationStatus, string> = {
 export function ApplicationTimeline({
   application,
   interviews,
+  events: history = [],
 }: ApplicationTimelineProps) {
   const { t, i18n } = useTranslation("applications");
   const dateLocale = i18n.language === "es" ? es : enUS;
@@ -80,8 +85,52 @@ export function ApplicationTimeline({
       description: t("timeline.application_created"),
     });
 
-    // Applied event
-    if (application.applied_at) {
+    const statusEvents = history.filter((e) => e.type === "status_change" && e.to_status);
+    const recordedApplied = statusEvents.some((e) => e.to_status === "applied");
+
+    for (const e of statusEvents) {
+      const to = e.to_status!;
+      result.push({
+        id: e.id,
+        date: e.created_at,
+        type: "status_change",
+        icon: STATUS_ICONS[to],
+        iconColor: STATUS_DOT_COLORS[to],
+        title: t("timeline.status_changed"),
+        description: e.payload.closed_reason === "ghosted"
+          ? t("timeline.marked_ghosted")
+          : t("timeline.moved_to", { status: t(`status.${to}`) }),
+      });
+    }
+
+    for (const e of history) {
+      if (e.type === "message_sent" && e.payload.message_kind) {
+        result.push({
+          id: e.id,
+          date: e.created_at,
+          type: "status_change",
+          icon: Mail,
+          iconColor: "text-sky-500 bg-sky-100 dark:bg-sky-900",
+          title: t(`timeline.message_sent.${e.payload.message_kind}`),
+          description: "",
+        });
+      } else if (e.type === "interview_completed") {
+        result.push({
+          id: e.id,
+          date: e.created_at,
+          type: "interview",
+          icon: CircleCheck,
+          iconColor: "text-emerald-500 bg-emerald-100 dark:bg-emerald-900",
+          title: t("timeline.interview_completed"),
+          description: e.payload.interview_type
+            ? t(`interview.type.${e.payload.interview_type}`, { defaultValue: e.payload.interview_type })
+            : "",
+        });
+      }
+    }
+
+    // Applied event (legacy applications without recorded history)
+    if (application.applied_at && !recordedApplied) {
       result.push({
         id: "applied",
         date: application.applied_at,
@@ -107,7 +156,7 @@ export function ApplicationTimeline({
       "withdrawn",
     ];
 
-    if (advancedStatuses.includes(application.status)) {
+    if (statusEvents.length === 0 && advancedStatuses.includes(application.status)) {
       const StatusIcon = STATUS_ICONS[application.status];
       result.push({
         id: `status-${application.status}`,
@@ -144,7 +193,7 @@ export function ApplicationTimeline({
     result.sort((a, b) => b.date - a.date);
 
     return result;
-  }, [application, interviews, t]);
+  }, [application, interviews, history, t]);
 
   return (
     <div className="relative space-y-0">
@@ -169,9 +218,11 @@ export function ApplicationTimeline({
             {/* Content */}
             <div className="flex-1 min-w-0 pt-0.5">
               <p className="text-sm font-medium">{event.title}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {event.description}
-              </p>
+              {event.description && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {event.description}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground mt-1">
                 {format(new Date(event.date), "PPp", { locale: dateLocale })}
               </p>

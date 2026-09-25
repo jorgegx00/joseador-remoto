@@ -57,6 +57,9 @@
     "interview_24h": "Tienes una entrevista manana",
     "interview_1h": "Entrevista comienza en 1 hora",
     "upcoming_interviews": "Entrevistas Proximas",
-    "upcoming_interviews_body": "Tienes {{count}} entrevista(s) en las proximas 24 horas"
+    "upcoming_interviews_body": "Tienes {{count}} entrevista(s) en las proximas 24 horas",
+    "follow_ups_title": "Seguimientos pendientes",
+    "follow_ups_body_one": "{{count}} aplicación necesita un seguimiento o agradecimiento",
+    "follow_ups_body_other": "{{count}} aplicaciones necesitan un seguimiento o agradecimiento"
   }
 }

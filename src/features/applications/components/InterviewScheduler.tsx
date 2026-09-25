@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { format, setHours, setMinutes, startOfDay } from "date-fns";
 import { CalendarIcon, ExternalLink } from "lucide-react";
@@ -17,8 +17,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useApplicationStore } from "@/stores/applicationStore";
+import {
+  COMMON_TIMEZONES,
+  formatTimeInZone,
+  localTimezone,
+  timezoneLabel,
+} from "@/lib/applications/timezones";
+import { useApplicationStore, type ScheduleResult } from "@/stores/applicationStore";
 import type { Interview, InterviewType } from "@/types";
 
 const INTERVIEW_TYPES: InterviewType[] = [
@@ -32,13 +39,16 @@ const INTERVIEW_TYPES: InterviewType[] = [
 ];
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120] as const;
-const HOURS = Array.from({ length: 14 }, (_, i) => i + 8); // 08 to 21
+// 06–23: cross-timezone rounds (e.g. Europe from the Americas) often fall early or late.
+const HOURS = Array.from({ length: 18 }, (_, i) => i + 6);
+const UNKNOWN_TZ = "__unknown__";
 const MINUTES = [0, 15, 30, 45] as const;
 
 interface InterviewSchedulerProps {
   applicationId: string;
   interview?: Interview;
-  onSave: () => void;
+  /** Receives the scheduling result for new interviews (undefined on edit). */
+  onSave: (result?: ScheduleResult) => void;
   onCancel: () => void;
 }
 
@@ -48,7 +58,7 @@ export function InterviewScheduler({
   onSave,
   onCancel,
 }: InterviewSchedulerProps) {
-  const { t } = useTranslation("applications");
+  const { t, i18n } = useTranslation("applications");
   const { scheduleInterview, updateInterview } = useApplicationStore();
 
   const existingDate = interview ? new Date(interview.scheduled_at) : null;
@@ -74,6 +84,9 @@ export function InterviewScheduler({
   );
   const [interviewerRole, setInterviewerRole] = useState(
     interview?.interviewer_role ?? "",
+  );
+  const [interviewerTz, setInterviewerTz] = useState(
+    interview?.interviewer_timezone || UNKNOWN_TZ,
   );
   const [notes, setNotes] = useState(interview?.notes ?? "");
   const [dateError, setDateError] = useState(false);
@@ -107,6 +120,7 @@ export function InterviewScheduler({
       parseInt(minute, 10),
     );
     const scheduledAt = scheduledDate.getTime();
+    const timezone = interviewerTz === UNKNOWN_TZ ? "" : interviewerTz;
 
     try {
       if (interview) {
@@ -117,10 +131,12 @@ export function InterviewScheduler({
           meeting_url: meetingUrl,
           interviewer_name: interviewerName,
           interviewer_role: interviewerRole,
+          interviewer_timezone: timezone,
           notes,
         });
+        onSave();
       } else {
-        await scheduleInterview(applicationId, {
+        const result = await scheduleInterview(applicationId, {
           application_id: applicationId,
           scheduled_at: scheduledAt,
           duration_minutes: parseInt(duration, 10),
@@ -129,13 +145,18 @@ export function InterviewScheduler({
           meeting_url: meetingUrl,
           interviewer_name: interviewerName,
           interviewer_role: interviewerRole,
+          interviewer_timezone: timezone,
           notes,
           feedback: "",
           outcome: "pending",
           status: "scheduled",
         });
+        if (!result) {
+          toast.error(t("interview.save_failed"));
+          return;
+        }
+        onSave(result);
       }
-      onSave();
     } catch {
       // Error is handled by the store
     } finally {
@@ -150,13 +171,29 @@ export function InterviewScheduler({
     meetingUrl,
     interviewerName,
     interviewerRole,
+    interviewerTz,
     notes,
     interview,
     applicationId,
     scheduleInterview,
     updateInterview,
     onSave,
+    t,
   ]);
+
+  const tzOptions = useMemo(() => {
+    const zones: string[] = [...COMMON_TIMEZONES];
+    for (const z of [localTimezone(), interviewerTz]) {
+      if (z && z !== UNKNOWN_TZ && !zones.includes(z)) zones.push(z);
+    }
+    return zones;
+  }, [interviewerTz]);
+
+  const theirTime = useMemo(() => {
+    if (!date || interviewerTz === UNKNOWN_TZ || interviewerTz === localTimezone()) return null;
+    const ms = setMinutes(setHours(date, parseInt(hour, 10)), parseInt(minute, 10)).getTime();
+    return formatTimeInZone(ms, interviewerTz, i18n.language);
+  }, [date, hour, minute, interviewerTz, i18n.language]);
 
   const handleOpenLink = useCallback(async () => {
     if (meetingUrl) {
@@ -234,6 +271,30 @@ export function InterviewScheduler({
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      {/* Interviewer timezone: the picker above is always local time */}
+      <div className="space-y-2">
+        <Label>{t("interview.interviewer_timezone")}</Label>
+        <Select value={interviewerTz} onValueChange={setInterviewerTz}>
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={UNKNOWN_TZ}>{t("interview.timezone_unknown")}</SelectItem>
+            {tzOptions.map((z) => (
+              <SelectItem key={z} value={z}>
+                {timezoneLabel(z)}
+                {z === localTimezone() ? ` (${t("interview.timezone_yours")})` : ""}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {theirTime && (
+          <p className="text-xs text-muted-foreground">
+            {t("interview.their_time", { time: theirTime })}
+          </p>
+        )}
       </div>
 
       {/* Duration */}

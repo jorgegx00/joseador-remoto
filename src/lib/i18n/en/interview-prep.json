@@ -7,7 +7,9 @@
     "strengths_weaknesses": "Strengths & Weaknesses",
     "questions": "Questions",
     "checklist": "Checklist",
-    "company_brief": "Company Brief"
+    "company_brief": "Company Brief",
+    "round_prep": "Round prep",
+    "fit": "Fit & gaps"
   },
   "pitch": {
     "title": "Elevator Pitch",
@@ -361,7 +363,7 @@
     "regenerate": "Regenerate",
     "generating": "Generating company brief...",
     "no_reviews": "No reviews available",
-    "no_reviews_hint": "Scrape Glassdoor interview reviews first to generate a research brief.",
+    "no_reviews_hint": "Glassdoor reviews are no longer collected. Use the \"Round prep\" and \"Fit & gaps\" tabs, which build on the job post and your CV.",
     "no_llm_warning": "No AI provider configured. Brief will use locally extracted data only. Configure a provider in Settings for AI-powered insights.",
     "avg_difficulty": "Avg. Difficulty",
     "success_rate": "Success Rate",
@@ -375,5 +377,99 @@
     "title": "Company Research",
     "brief": "Company Brief",
     "generate": "Generate Research"
+  },
+  "prep_ai": {
+    "no_llm": "Configure an AI provider in Settings to generate prep material.",
+    "generation_failed": "Could not generate this. Please try again.",
+    "updated": "Generated {{when}}",
+    "cancel": "Cancel",
+    "generate": "Generate",
+    "regenerate": "Regenerate",
+    "needs_input_title": "Answer these to sharpen your prep",
+    "needs_input_hint": "The AI won't invent numbers or outcomes. Add these facts to your CV or interview notes, then regenerate.",
+    "missing_cv_or_job": "This application needs both a CV and a job post to generate prep material.",
+    "language": "Material language",
+    "language_auto": "Auto ({{lang}}, from job post)",
+    "language_name": {
+      "en": "English",
+      "es": "Spanish"
+    }
+  },
+  "gap_brief": {
+    "title": "Fit & gaps",
+    "description": "Each key requirement of the job post mapped to evidence in your CV, with how to talk about it, including honest framing for gaps.",
+    "talking_points": "Your strongest points for this role",
+    "requirements": "Requirements vs. your experience",
+    "fit": {
+      "strong": "Strong",
+      "partial": "Partial",
+      "missing": "Gap"
+    },
+    "must_have": "Must-have",
+    "evidence": "From your CV",
+    "remote_notes": "Worth clarifying (remote)",
+    "empty": "Generate the fit analysis to see where you're strong and what to prepare. Round prep packs use it too."
+  },
+  "round_prep": {
+    "title": "Prep pack for this round",
+    "description": "Likely questions with answer outlines from your own experience, questions to ask, a short study plan and pitfalls to avoid.",
+    "scheduled_rounds": "Scheduled rounds",
+    "practice_rounds": "Prepare for a round type",
+    "practice": "Practice this round",
+    "empty": "Generate a prep pack for this round. Tip: generate \"Fit & gaps\" first so the pack targets your real gaps.",
+    "focus": "What this round is likely assessing",
+    "likely_questions": "Likely questions",
+    "why_asked": "Why they'd ask",
+    "study_plan": "Study plan",
+    "day": "Day {{day}}",
+    "questions_to_ask": "Questions to ask them",
+    "pitfalls": "Pitfalls to avoid"
+  },
+  "mock": {
+    "open": "Practice interview",
+    "title": "Practice interview",
+    "setup_title": "Set up a practice round",
+    "setup_description": "An AI interviewer asks one question at a time based on this job post and your CV. After each answer you get short coaching focused on content (examples, results, relevance), with no scores.",
+    "round": "Round",
+    "questions": "Length",
+    "questions_option": "{{count}} questions",
+    "language": "Interview language",
+    "coaching_note": "Questions use the interview language; coaching uses the app's language.",
+    "start": "Start",
+    "past_sessions": "Past sessions",
+    "status": {
+      "active": "In progress",
+      "completed": "Completed"
+    },
+    "delete": "Delete session",
+    "progress": "question {{current}} of {{total}}",
+    "end": "End & get feedback",
+    "leave": "Close",
+    "follow_up": "Follow-up",
+    "thinking": "The interviewer is thinking…",
+    "writing_report": "Writing your feedback…",
+    "stalled": "Your answer is saved, but the next step didn't complete.",
+    "retry": "Retry",
+    "answer_placeholder": "Answer as you would out loud. Concrete examples beat polish.",
+    "send_hint": "Ctrl + Enter to send",
+    "send": "Send answer",
+    "report_title": "How it went",
+    "strengths": "What came across well",
+    "recurring_gaps": "What to work on",
+    "stories_to_prepare": "Stories worth writing down",
+    "add_story": "Add to STAR bank",
+    "story_added": "Added to your STAR stories. Fill in the details in the STAR tab.",
+    "story_added_short": "Added",
+    "review_topics": "Topics to review",
+    "again": "Practice again",
+    "check": {
+      "evidence": "Concrete example",
+      "result": "Clear result",
+      "relevance": "Relevant to the role"
+    },
+    "worked": "Worked",
+    "improve": "Try",
+    "cv_fact": "From your CV you could mention",
+    "stronger_opening": "Stronger opening"
   }
 }

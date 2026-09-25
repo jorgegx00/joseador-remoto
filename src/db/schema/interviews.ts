@@ -15,6 +15,7 @@ export const interviews = sqliteTable(
     meeting_url: text("meeting_url"),
     interviewer_name: text("interviewer_name"),
     interviewer_role: text("interviewer_role"),
+    interviewer_timezone: text("interviewer_timezone"),
     notes: text("notes").default(""),
     feedback: text("feedback").default(""),
     outcome: text("outcome").default("pending"),

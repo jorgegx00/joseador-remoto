@@ -16,6 +16,30 @@ import {
   type PastedJobExtraction,
 } from "./job-extraction";
 import { CancelledError, LlmRequestError, describeLlmError } from "./errors";
+import type { z } from "zod";
+import {
+  buildGapBriefPrompt,
+  buildMessageDraftPrompt,
+  buildMockReportPrompt,
+  buildMockTurnPrompt,
+  buildRoundPackPrompt,
+  type MessageDraftInput,
+  type MockTurnInput,
+  type RoundPackInput,
+} from "./prep-prompts";
+import {
+  gapBriefSchema,
+  messageDraftSchema,
+  mockReportSchema,
+  mockTurnSchema,
+  roundPackSchema,
+  type GapBrief,
+  type MessageDraft,
+  type MockReport,
+  type MockTurnResult,
+  type RoundPack,
+} from "./prep-schemas";
+import type { MaterialLanguage } from "./language";
 import type { LlmProviderConfig } from "./providers/base";
 import type {
   ParsedCv,
@@ -41,6 +65,9 @@ import type {
  * in cv-output-guard.ts, so this cap is not our runaway protection.
  */
 const CV_STREAM_MAX_OUTPUT_TOKENS = 32000;
+
+/** Same reasoning-budget concern as above, for the structured interview-prep calls. */
+const PREP_MAX_OUTPUT_TOKENS = 16000;
 
 /**
  * Events from the CV optimization streams. `reasoning` lets the UI show "thinking…"
@@ -392,6 +419,58 @@ export class LlmService {
       ),
     });
     return result.object as ParsedCv;
+  }
+
+  // -------------------------------------------------------------------------
+  // Interview prep grounded in CV + job post (see prep-prompts.ts)
+  // -------------------------------------------------------------------------
+  private async structured<S extends z.ZodType>(
+    schema: S,
+    schemaName: string,
+    pair: PromptPair,
+    abortSignal?: AbortSignal,
+  ): Promise<z.infer<S>> {
+    try {
+      const result = await generateObject({
+        model: this.model,
+        schema,
+        schemaName,
+        system: pair.system,
+        prompt: pair.prompt,
+        maxOutputTokens: PREP_MAX_OUTPUT_TOKENS,
+        abortSignal,
+      });
+      return result.object as z.infer<S>;
+    } catch (err) {
+      if (abortSignal?.aborted) throw new CancelledError();
+      throw err;
+    }
+  }
+
+  generateGapBrief(
+    input: { cv: ParsedCv; job: Job; language: MaterialLanguage },
+    abortSignal?: AbortSignal,
+  ): Promise<GapBrief> {
+    return this.structured(gapBriefSchema, "FitAnalysis", buildGapBriefPrompt(input), abortSignal);
+  }
+
+  generateRoundPack(input: RoundPackInput, abortSignal?: AbortSignal): Promise<RoundPack> {
+    return this.structured(roundPackSchema, "RoundPrepPack", buildRoundPackPrompt(input), abortSignal);
+  }
+
+  mockTurn(input: MockTurnInput, abortSignal?: AbortSignal): Promise<MockTurnResult> {
+    return this.structured(mockTurnSchema, "MockInterviewTurn", buildMockTurnPrompt(input), abortSignal);
+  }
+
+  mockReport(
+    input: Parameters<typeof buildMockReportPrompt>[0],
+    abortSignal?: AbortSignal,
+  ): Promise<MockReport> {
+    return this.structured(mockReportSchema, "MockInterviewReport", buildMockReportPrompt(input), abortSignal);
+  }
+
+  draftMessage(input: MessageDraftInput, abortSignal?: AbortSignal): Promise<MessageDraft> {
+    return this.structured(messageDraftSchema, "MessageDraft", buildMessageDraftPrompt(input), abortSignal);
   }
 
   // -------------------------------------------------------------------------

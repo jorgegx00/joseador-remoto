@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,6 +10,9 @@ import { UpcomingInterviews } from "@/features/dashboard/components/UpcomingInte
 import { RecentJobs } from "@/features/dashboard/components/RecentJobs";
 import { AtsScoreTrend } from "@/features/dashboard/components/AtsScoreTrend";
 import { QuickActions } from "@/features/dashboard/components/QuickActions";
+import { ActionList } from "@/features/dashboard/components/ActionList";
+import { usePipelineActions, type ActionItem } from "@/features/dashboard/hooks/usePipelineActions";
+import { MessageDraftDialog } from "@/features/applications/components/MessageDraftDialog";
 
 function DashboardSkeleton() {
   return (
@@ -62,7 +66,9 @@ export function DashboardPage() {
     isLoading,
   } = useDashboard();
 
-  const { applications } = useApplicationStore();
+  const { applications, interviews } = useApplicationStore();
+  const { groups: actionGroups, total: actionTotal, reloadEvents } = usePipelineActions();
+  const [draftFor, setDraftFor] = useState<ActionItem | null>(null);
 
   const greeting = primaryCvName
     ? t("welcome", { name: primaryCvName })
@@ -87,6 +93,24 @@ export function DashboardPage() {
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
 
+        {/* What to do next: follow-ups, thank-yous, prep, possible ghosting */}
+        <ActionList
+          groups={actionGroups}
+          total={actionTotal}
+          onChanged={() => void reloadEvents()}
+          onDraft={setDraftFor}
+        />
+        {draftFor && (
+          <MessageDraftDialog
+            open
+            onOpenChange={(open) => !open && setDraftFor(null)}
+            applicationId={draftFor.application_id}
+            kind={draftFor.kind === "thank_you" ? "thank_you" : "follow_up"}
+            interview={draftFor.interview}
+            onSent={() => void reloadEvents()}
+          />
+        )}
+
         {/* Stats cards */}
         <StatsCards stats={stats} nextInterview={nextInterview} />
 
@@ -96,7 +120,7 @@ export function DashboardPage() {
         {/* Main content grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Application funnel */}
-          <ApplicationFunnel applications={applications} />
+          <ApplicationFunnel applications={applications} interviews={interviews} />
 
           {/* Upcoming interviews */}
           <UpcomingInterviews interviews={upcomingInterviews} />

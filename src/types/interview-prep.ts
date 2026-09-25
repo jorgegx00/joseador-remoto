@@ -81,3 +81,45 @@ export interface ChecklistState {
   closing: Record<string, boolean>;
   post_interview: Record<string, boolean>;
 }
+
+// ---------------------------------------------------------------------------
+// LLM prep documents grounded in CV + job post
+// ---------------------------------------------------------------------------
+
+export type PrepDocumentKind = "gap_brief" | "round_pack";
+
+export interface PrepDocument<T = unknown> {
+  id: string;
+  application_id: string;
+  /** Empty string for application-level documents (gap brief). */
+  interview_id: string;
+  kind: PrepDocumentKind;
+  language: "en" | "es";
+  content: T;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface MockTurn {
+  question: string;
+  intent: string;
+  is_follow_up: boolean;
+  answer: string;
+  /** Coaching on `answer`; null until answered (or if coaching failed). */
+  coaching: import("@/lib/llm/prep-schemas").MockCoaching | null;
+}
+
+export interface MockSession {
+  id: string;
+  application_id: string;
+  interview_id: string;
+  interview_type: import("./application").InterviewType;
+  language: "en" | "es";
+  coaching_language: "en" | "es";
+  total_questions: number;
+  turns: MockTurn[];
+  report: import("@/lib/llm/prep-schemas").MockReport | null;
+  status: "active" | "completed";
+  created_at: number;
+  updated_at: number;
+}

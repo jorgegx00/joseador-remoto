@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "@tanstack/react-router";
 import { useSortable } from "@dnd-kit/sortable";
@@ -12,7 +12,9 @@ import {
   ExternalLink,
   BookOpen,
   Archive,
+  CalendarPlus,
 } from "lucide-react";
+import { toast } from "sonner";
 import { open } from "@tauri-apps/plugin-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,8 +25,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { MatchScoreGauge } from "@/components/common/MatchScoreGauge";
-import { useApplicationStore } from "@/stores/applicationStore";
+import { useApplicationStore, type ScheduleResult } from "@/stores/applicationStore";
+import { InterviewScheduler } from "./InterviewScheduler";
 import type { EnrichedApplication } from "../hooks/useApplications";
 
 interface ApplicationCardProps {
@@ -60,6 +69,7 @@ export function ApplicationCard({
   const { t, i18n } = useTranslation("applications");
   const navigate = useNavigate();
   const { updateStatus } = useApplicationStore();
+  const [scheduleOpen, setScheduleOpen] = useState(false);
 
   const {
     attributes,
@@ -122,21 +132,46 @@ export function ApplicationCard({
     });
   }, [navigate, application.id]);
 
+  const handleScheduled = useCallback(
+    (result?: ScheduleResult) => {
+      setScheduleOpen(false);
+      toast.success(
+        result?.advancedTo
+          ? t("interview.scheduled_and_moved", { status: t(`status.${result.advancedTo}`) })
+          : t("interview.scheduled"),
+      );
+    },
+    [t],
+  );
+
   const handleArchive = useCallback(async () => {
     await updateStatus(application.id, "withdrawn");
   }, [updateStatus, application.id]);
 
+  const stop = (e: React.SyntheticEvent) => e.stopPropagation();
+
   const cardContent = (
     <Card
-      className={`cursor-grab active:cursor-grabbing hover:bg-accent/50 transition-colors ${
-        isDragOverlay ? "shadow-lg ring-2 ring-primary/30" : ""
-      }`}
+      role={isDragOverlay ? undefined : "button"}
+      tabIndex={isDragOverlay ? undefined : 0}
+      aria-label={t("actions.view_details")}
+      onClick={isDragOverlay ? undefined : handleViewDetails}
+      onKeyDown={(e) => {
+        if (!isDragOverlay && e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          handleViewDetails();
+        }
+      }}
+      className={`min-w-0 overflow-hidden cursor-pointer hover:bg-accent/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+        isDragOverlay ? "shadow-lg ring-2 ring-primary/30 cursor-grabbing" : ""
+      } ${application.closed_reason === "ghosted" ? "opacity-60" : ""}`}
     >
       <CardContent className="p-3 space-y-2">
         <div className="flex items-start gap-2">
           {/* Drag handle */}
           <div
-            className="mt-0.5 text-muted-foreground hover:text-foreground cursor-grab"
+            className="mt-0.5 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
+            onClick={stop}
             {...listeners}
             {...attributes}
           >
@@ -152,7 +187,7 @@ export function ApplicationCard({
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold truncate">{jobTitle}</p>
+            <p className="text-sm font-semibold truncate" title={jobTitle}>{jobTitle}</p>
             <p className="text-xs text-muted-foreground truncate">
               {companyName}
             </p>
@@ -165,11 +200,14 @@ export function ApplicationCard({
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 flex-shrink-0"
+                aria-label={t("actions.more")}
+                onClick={stop}
+                onKeyDown={stop}
               >
                 <MoreHorizontal className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" onClick={stop}>
               <DropdownMenuItem onClick={handleViewDetails}>
                 <Eye className="h-4 w-4 mr-2" />
                 {t("actions.view_details")}
@@ -180,6 +218,10 @@ export function ApplicationCard({
                   {t("actions.open_posting")}
                 </DropdownMenuItem>
               )}
+              <DropdownMenuItem onClick={() => setScheduleOpen(true)}>
+                <CalendarPlus className="h-4 w-4 mr-2" />
+                {t("schedule_interview")}
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleInterviewPrep}>
                 <BookOpen className="h-4 w-4 mr-2" />
                 {t("actions.interview_prep")}
@@ -211,6 +253,12 @@ export function ApplicationCard({
             </Badge>
           )}
 
+          {application.closed_reason === "ghosted" && (
+            <Badge variant="outline" className="text-[10px] h-5 px-1.5 text-muted-foreground">
+              {t("closed_reason.ghosted")}
+            </Badge>
+          )}
+
           {cvName && (
             <Badge
               variant="secondary"
@@ -231,6 +279,22 @@ export function ApplicationCard({
   return (
     <div ref={setNodeRef} style={style}>
       {cardContent}
+      <Dialog open={scheduleOpen} onOpenChange={setScheduleOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {t("interview.schedule_interview")} — {jobTitle}
+            </DialogTitle>
+          </DialogHeader>
+          {scheduleOpen && (
+            <InterviewScheduler
+              applicationId={application.id}
+              onSave={handleScheduled}
+              onCancel={() => setScheduleOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

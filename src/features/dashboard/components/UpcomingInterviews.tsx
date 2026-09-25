@@ -112,6 +112,7 @@ export function UpcomingInterviews({ interviews }: UpcomingInterviewsProps) {
                     void navigate({
                       to: "/applications/$appId/prep",
                       params: { appId: interview.application_id },
+                      search: { interview: interview.id },
                     })
                   }
                 >

@@ -10,10 +10,16 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import type { Application } from "@/types";
+import {
+  BENCHMARK_INTERVIEW_RATE,
+  BENCHMARK_RESPONSE_RATE,
+  computeFunnelRates,
+} from "@/lib/applications/funnel";
+import type { Application, Interview } from "@/types";
 
 interface ApplicationFunnelProps {
   applications: Application[];
+  interviews?: Interview[];
 }
 
 interface FunnelStage {
@@ -32,8 +38,10 @@ const STAGE_COLORS = [
   "#10b981", // emerald-500
 ];
 
-export function ApplicationFunnel({ applications }: ApplicationFunnelProps) {
+export function ApplicationFunnel({ applications, interviews = [] }: ApplicationFunnelProps) {
   const { t } = useTranslation("dashboard");
+  const rates = useMemo(() => computeFunnelRates(applications, interviews), [applications, interviews]);
+  const pct = (n: number) => Math.round(n * 100);
 
   const stages = useMemo((): FunnelStage[] => {
     // Count applications that reached each stage (cumulative forward)
@@ -136,6 +144,16 @@ export function ApplicationFunnel({ applications }: ApplicationFunnelProps) {
             </div>
           ))}
         </div>
+        {rates && (
+          <p className="mt-3 text-xs text-muted-foreground">
+            {t("funnel.rates", {
+              response: pct(rates.responseRate),
+              interview: pct(rates.interviewRate),
+              benchResponse: pct(BENCHMARK_RESPONSE_RATE),
+              benchInterview: pct(BENCHMARK_INTERVIEW_RATE),
+            })}
+          </p>
+        )}
       </CardContent>
     </Card>
   );

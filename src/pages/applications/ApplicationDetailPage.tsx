@@ -12,6 +12,10 @@ import {
   ExternalLink,
   FileText,
   Building2,
+  CalendarPlus,
+  CheckCircle2,
+  Mail,
+  Mic,
 } from "lucide-react";
 import { open } from "@tauri-apps/plugin-shell";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -34,19 +38,32 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { LoadingSkeleton } from "@/components/common/LoadingSkeleton";
 import { ApplicationTimeline } from "@/features/applications/components/ApplicationTimeline";
 import { ApplicationNotes } from "@/features/applications/components/ApplicationNotes";
-import { useApplicationStore } from "@/stores/applicationStore";
+import { InterviewScheduler } from "@/features/applications/components/InterviewScheduler";
+import { MessageDraftDialog } from "@/features/applications/components/MessageDraftDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useApplicationStore, type ScheduleResult } from "@/stores/applicationStore";
+import { exportInterviewIcs } from "@/services/interview-calendar";
+import { formatTimeInZone, timezoneLabel } from "@/lib/applications/timezones";
 import {
   getApplicationById,
   getJobById,
   getCompanyById,
   getCvById,
   getInterviewsByApplicationId,
+  getApplicationEvents,
 } from "@/services/database";
 import type {
   Application,
+  ApplicationEvent,
   ApplicationStatus,
   Interview,
   InterviewOutcome,
+  MessageKind,
 } from "@/types";
 import type { Job, Company } from "@/types";
 import type { CvRecord } from "@/types";
@@ -80,7 +97,11 @@ export function ApplicationDetailPage() {
   const [company, setCompany] = useState<Company | null>(null);
   const [cv, setCv] = useState<CvRecord | null>(null);
   const [interviews, setInterviews] = useState<Interview[]>([]);
+  const [events, setEvents] = useState<ApplicationEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [draft, setDraft] = useState<{ kind: MessageKind; interview: Interview | null } | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const dateLocale = i18n.language === "es" ? es : enUS;
@@ -90,7 +111,8 @@ export function ApplicationDetailPage() {
     let cancelled = false;
 
     async function load() {
-      setIsLoading(true);
+      // Only the first load shows the skeleton; reloads refresh in place.
+      if (reloadKey === 0) setIsLoading(true);
       try {
         const app = await getApplicationById(appId);
         if (cancelled || !app) {
@@ -99,15 +121,17 @@ export function ApplicationDetailPage() {
         }
         setApplication(app);
 
-        const [jobData, interviewData] = await Promise.all([
+        const [jobData, interviewData, eventData] = await Promise.all([
           getJobById(app.job_id).catch(() => null),
           getInterviewsByApplicationId(appId).catch(() => []),
+          getApplicationEvents(appId).catch(() => []),
         ]);
 
         if (cancelled) return;
 
         setJob(jobData);
         setInterviews(interviewData);
+        setEvents(eventData);
 
         if (jobData) {
           const companyData = await getCompanyById(jobData.company_id).catch(
@@ -130,26 +154,43 @@ export function ApplicationDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [appId]);
+  }, [appId, reloadKey]);
+
+  const reload = useCallback(() => setReloadKey((k) => k + 1), []);
+
+  const handleScheduled = useCallback(
+    (result?: ScheduleResult) => {
+      setScheduleOpen(false);
+      if (result?.advancedTo) {
+        toast.success(
+          t("interview.scheduled_and_moved", { status: t(`status.${result.advancedTo}`) }),
+        );
+      } else {
+        toast.success(t("interview.scheduled"));
+      }
+      reload();
+    },
+    [reload, t],
+  );
+
+  const handleMarkCompleted = useCallback(
+    async (interviewId: string) => {
+      await updateInterview(interviewId, { status: "completed" });
+      reload();
+    },
+    [updateInterview, reload],
+  );
 
   const handleStatusChange = useCallback(
     async (newStatus: string) => {
       if (!application) return;
       await updateStatus(application.id, newStatus as ApplicationStatus);
-      setApplication((prev) =>
-        prev
-          ? {
-              ...prev,
-              status: newStatus as ApplicationStatus,
-              updated_at: Date.now(),
-            }
-          : null,
-      );
+      reload();
       toast.success(
         t("board.moved_to", { status: t(`status.${newStatus}`) }),
       );
     },
-    [application, updateStatus, t],
+    [application, updateStatus, reload, t],
   );
 
   const handleDelete = useCallback(async () => {
@@ -262,7 +303,7 @@ export function ApplicationDetailPage() {
                 {t("detail.prep")}
               </Button>
             </Link>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => setScheduleOpen(true)}>
               <Calendar className="h-4 w-4 mr-2" />
               {t("schedule_interview")}
             </Button>
@@ -282,6 +323,7 @@ export function ApplicationDetailPage() {
                 <ApplicationTimeline
                   application={application}
                   interviews={interviews}
+                  events={events}
                 />
               </CardContent>
             </Card>
@@ -303,7 +345,7 @@ export function ApplicationDetailPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>{t("detail.interviews")}</CardTitle>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => setScheduleOpen(true)}>
                   <Calendar className="h-4 w-4 mr-2" />
                   {t("schedule_interview")}
                 </Button>
@@ -340,13 +382,85 @@ export function ApplicationDetailPage() {
                                 )}
                               </Badge>
                             </div>
-                            <span className="text-sm text-muted-foreground">
-                              {format(
-                                new Date(interview.scheduled_at),
-                                "PPp",
-                                { locale: dateLocale },
+                            <div className="text-right">
+                              <span className="text-sm text-muted-foreground">
+                                {format(
+                                  new Date(interview.scheduled_at),
+                                  "PPp",
+                                  { locale: dateLocale },
+                                )}
+                              </span>
+                              {interview.interviewer_timezone && (
+                                <p className="text-xs text-muted-foreground">
+                                  {t("interview.their_time_short", {
+                                    city: timezoneLabel(interview.interviewer_timezone),
+                                    time: formatTimeInZone(
+                                      interview.scheduled_at,
+                                      interview.interviewer_timezone,
+                                      i18n.language,
+                                    ),
+                                  })}
+                                </p>
                               )}
-                            </span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            {interview.status === "scheduled" &&
+                              interview.scheduled_at > Date.now() && (
+                                <>
+                                  <Link
+                                    to="/applications/$appId/prep"
+                                    params={{ appId: application.id }}
+                                    search={{ interview: interview.id }}
+                                  >
+                                    <Button variant="secondary" size="sm">
+                                      <BookOpen className="h-3.5 w-3.5 mr-2" />
+                                      {t("interview.prepare")}
+                                    </Button>
+                                  </Link>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      void exportInterviewIcs(interview, {
+                                        summary: `${tCommon(`interview_types.${interview.interview_type}`)} — ${companyName || jobTitle}`,
+                                        description: [jobTitle, interview.interviewer_name, interview.notes]
+                                          .filter(Boolean)
+                                          .join("\n"),
+                                      }).then((path) => {
+                                        if (path) toast.success(t("interview.ics_saved"));
+                                      })
+                                    }
+                                  >
+                                    <CalendarPlus className="h-3.5 w-3.5 mr-2" />
+                                    {t("interview.add_to_calendar")}
+                                  </Button>
+                                </>
+                              )}
+                            {interview.status === "scheduled" &&
+                              interview.scheduled_at <= Date.now() && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => void handleMarkCompleted(interview.id)}
+                                >
+                                  <CheckCircle2 className="h-3.5 w-3.5 mr-2" />
+                                  {t("interview.mark_completed")}
+                                </Button>
+                              )}
+                            {interview.status !== "cancelled" &&
+                              interview.interview_type !== "take_home" &&
+                              interview.scheduled_at <= Date.now() && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setDraft({ kind: "thank_you", interview })}
+                                >
+                                  <Mail className="h-3.5 w-3.5 mr-2" />
+                                  {t("drafts.kinds.thank_you")}
+                                </Button>
+                              )}
                           </div>
 
                           {interview.interviewer_name && (
@@ -503,9 +617,9 @@ export function ApplicationDetailPage() {
               </Card>
             )}
 
-            {/* Interview prep */}
+            {/* Interview prep + messages */}
             <Card>
-              <CardContent className="p-4">
+              <CardContent className="p-4 space-y-2">
                 <Link
                   to="/applications/$appId/prep"
                   params={{ appId: application.id }}
@@ -515,6 +629,23 @@ export function ApplicationDetailPage() {
                     {t("detail.prep")}
                   </Button>
                 </Link>
+                <Link
+                  to="/applications/$appId/mock"
+                  params={{ appId: application.id }}
+                >
+                  <Button variant="outline" className="w-full">
+                    <Mic className="h-4 w-4 mr-2" />
+                    {t("detail.practice")}
+                  </Button>
+                </Link>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setDraft({ kind: "follow_up", interview: null })}
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  {t("drafts.open")}
+                </Button>
               </CardContent>
             </Card>
 
@@ -568,6 +699,32 @@ export function ApplicationDetailPage() {
           </div>
         </div>
       </div>
+
+      <Dialog open={scheduleOpen} onOpenChange={setScheduleOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("interview.schedule_interview")}</DialogTitle>
+          </DialogHeader>
+          {scheduleOpen && (
+            <InterviewScheduler
+              applicationId={application.id}
+              onSave={handleScheduled}
+              onCancel={() => setScheduleOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {draft && (
+        <MessageDraftDialog
+          open
+          onOpenChange={(open) => !open && setDraft(null)}
+          applicationId={application.id}
+          kind={draft.kind}
+          interview={draft.interview}
+          onSent={reload}
+        />
+      )}
 
       <ConfirmDialog
         open={confirmDeleteOpen}

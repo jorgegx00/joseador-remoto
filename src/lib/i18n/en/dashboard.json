@@ -20,7 +20,8 @@
     "interviewing": "Interviewing",
     "offered": "Offered",
     "accepted": "Accepted",
-    "conversion": "{{rate}}% conversion"
+    "conversion": "{{rate}}% conversion",
+    "rates": "{{response}}% got a reply (typical ≈ {{benchResponse}}%) · {{interview}}% reached an interview (typical ≈ {{benchInterview}}%)"
   },
   "upcoming_interviews": {
     "title": "Upcoming Interviews",
@@ -60,5 +61,37 @@
     "run_ats": "Run ATS Check",
     "view_applications": "View Applications"
   },
-  "loading": "Loading dashboard..."
+  "loading": "Loading dashboard...",
+  "actions_list": {
+    "title": "Next steps",
+    "subtitle_one": "{{count}} thing worth doing",
+    "subtitle_other": "{{count}} things worth doing",
+    "subtitle_empty": "Follow-ups, thank-you notes and prep show up here",
+    "empty": "You're all caught up. Nothing needs you right now.",
+    "bucket": {
+      "attention": "Pending",
+      "today": "Today",
+      "week": "This week"
+    },
+    "kind": {
+      "follow_up": "Follow up with {{company}}",
+      "thank_you": "Send a thank-you note to {{company}}",
+      "prepare": "Prepare: {{round}} at {{company}}",
+      "take_home_due": "Take-home due for {{company}}",
+      "maybe_ghosted": "No reply from {{company}} in 3 weeks"
+    },
+    "open_prep": "Prepare",
+    "draft": "Draft",
+    "mark_sent": "Mark as sent",
+    "marked_sent": "Marked as sent",
+    "heard_back": "They replied",
+    "heard_back_done": "Noted. Follow-up clock reset.",
+    "snooze_3d": "Remind me in 3 days",
+    "snooze_week": "Give it another week",
+    "snoozed": "Snoozed",
+    "mark_ghosted": "Close as no response",
+    "closed_ghosted": "Closed as no response. Silence is data, not a verdict on you.",
+    "view_application": "View application",
+    "more": "More actions"
+  }
 }

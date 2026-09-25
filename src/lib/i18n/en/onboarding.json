@@ -57,6 +57,9 @@
     "interview_24h": "You have an interview tomorrow",
     "interview_1h": "Interview starting in 1 hour",
     "upcoming_interviews": "Upcoming Interviews",
-    "upcoming_interviews_body": "You have {{count}} interview(s) in the next 24 hours"
+    "upcoming_interviews_body": "You have {{count}} interview(s) in the next 24 hours",
+    "follow_ups_title": "Follow-ups pending",
+    "follow_ups_body_one": "{{count}} application could use a follow-up or thank-you note",
+    "follow_ups_body_other": "{{count}} applications could use a follow-up or thank-you note"
   }
 }
