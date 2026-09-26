@@ -19,6 +19,7 @@ import { ulid } from "ulid";
 import { isForwardMove, statusAfterScheduling } from "@/lib/applications/status-rules";
 import { DAY_MS } from "@/lib/applications/follow-up-rules";
 import { scheduleInterviewReminder } from "@/lib/notifications";
+import { useStudyPlanStore } from "@/stores/studyPlanStore";
 import type {
   Application,
   ApplicationEvent,
@@ -298,6 +299,10 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
           ? (get().interviews.find((i) => i.id === id) ?? (await getInterviewById(id)))
           : null;
       await dbUpdateInterview(id, data);
+      if (data.scheduled_at !== undefined || data.interview_type !== undefined || data.status !== undefined) {
+        // The quick study plan depends on when/what the round is.
+        useStudyPlanStore.getState().invalidate(id);
+      }
       if (before && data.status === "completed" && before.status !== "completed") {
         await logEvent(before.application_id, {
           type: "interview_completed",
@@ -317,6 +322,7 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
   deleteInterview: async (id) => {
     try {
       await dbDeleteInterview(id);
+      useStudyPlanStore.getState().invalidate(id);
       set((state) => ({
         interviews: state.interviews.filter((i) => i.id !== id),
       }));

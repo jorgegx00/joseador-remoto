@@ -471,5 +471,56 @@
     "improve": "Try",
     "cv_fact": "From your CV you could mention",
     "stronger_opening": "Stronger opening"
+  },
+  "quick_plan": {
+    "title": "Quick study plan",
+    "countdown": "{{round}} · {{in}}",
+    "today_at": "today at {{time}}",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min",
+    "earlier_days_one": "{{count}} earlier day",
+    "earlier_days_other": "{{count}} earlier days",
+    "key_messages": "Get these across",
+    "cheat_sheet": "Cheat sheet",
+    "stories": "Stories to have ready",
+    "numbers": "Numbers worth quoting",
+    "ask_them": "Ask them",
+    "day_of": "On the day",
+    "not_ready": "Not ready yet",
+    "failed": "The plan couldn't be generated.",
+    "none": "No study plan yet.",
+    "ready_later": "The plan will be ready a week before the interview.",
+    "generate": "Generate plan",
+    "refresh": "Regenerate plan",
+    "outdated": "Outdated, refresh",
+    "show_full": "Show full plan",
+    "hide_full": "Hide full plan",
+    "next_day": "Next: {{day}} · {{focus}}",
+    "starts_on": "Plan starts on {{date}}",
+    "budget": "Time per day",
+    "budget_option": {
+      "30": "30 min / day",
+      "60": "1 h / day",
+      "120": "2 h / day",
+      "180": "3 h+ / day"
+    },
+    "step": {
+      "queued": "Waiting for another plan to finish…",
+      "fit": "Preparing the fit analysis…",
+      "round": "Building the round prep pack…",
+      "plan": "Condensing your plan…"
+    },
+    "source": {
+      "fit": "Fit & gaps",
+      "round_pack": "Round prep",
+      "stories": "STAR",
+      "pitch": "Pitch",
+      "strengths": "Strengths",
+      "mock": "Practice",
+      "job_post": "Job post",
+      "cv": "CV"
+    }
   }
 }

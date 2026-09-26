@@ -28,6 +28,7 @@ import {
 import { useApplicationStore } from "@/stores/applicationStore";
 import type { ActionBucket, PipelineActionKind } from "@/lib/applications/follow-up-rules";
 import type { ActionItem } from "../hooks/usePipelineActions";
+import { QuickStudyPlan } from "@/features/interview-prep/components/QuickStudyPlan";
 
 const KIND_ICONS: Record<PipelineActionKind, LucideIcon> = {
   follow_up: Mail,
@@ -213,29 +214,35 @@ export function ActionList({ groups, total, onChanged, onDraft }: ActionListProp
                 {groups[bucket].map((item) => {
                   const Icon = KIND_ICONS[item.kind];
                   const company = item.companyName || item.jobTitle || "…";
+                  const showPlan = (item.kind === "prepare" || item.kind === "take_home_due") && item.interview;
                   return (
                     <div
                       key={`${item.kind}-${item.application_id}-${item.interview_id ?? ""}`}
-                      className="flex items-center gap-3 rounded-lg border p-3"
+                      className="rounded-lg border p-3"
                     >
-                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-muted">
-                        <Icon className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-muted">
+                          <Icon className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">
+                            {t(`actions_list.kind.${item.kind}`, {
+                              company,
+                              round: item.interview
+                                ? tApps(`interview.type.${item.interview.interview_type}`)
+                                : "",
+                            })}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {[item.jobTitle, when(item)].filter(Boolean).join(" · ")}
+                          </p>
+                        </div>
+                        {primary(item)}
+                        {secondary(item)}
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
-                          {t(`actions_list.kind.${item.kind}`, {
-                            company,
-                            round: item.interview
-                              ? tApps(`interview.type.${item.interview.interview_type}`)
-                              : "",
-                          })}
-                        </p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {[item.jobTitle, when(item)].filter(Boolean).join(" · ")}
-                        </p>
-                      </div>
-                      {primary(item)}
-                      {secondary(item)}
+                      {showPlan && (
+                        <QuickStudyPlan interview={item.interview!} variant="inline" className="mt-2 pl-11" />
+                      )}
                     </div>
                   );
                 })}

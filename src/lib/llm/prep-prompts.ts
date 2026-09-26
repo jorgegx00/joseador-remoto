@@ -15,12 +15,12 @@
  * - Candidate-facing wording uses the material language (usually the job post's);
  *   coaching aimed at the candidate may use their UI language.
  */
-import type { InterviewType, Job, ParsedCv, StarStory } from "@/types";
+import type { InterviewPrep, InterviewType, Job, ParsedCv, StarStory } from "@/types";
 import type { MessageKind } from "@/types";
 import { formatCvForPrompt, formatJobForPrompt } from "./prompts";
 import { LANGUAGE_NAME, type MaterialLanguage } from "./language";
 import type { PromptPair } from "./cv-optimization-prompts";
-import type { GapBrief } from "./prep-schemas";
+import type { GapBrief, MockReport, RoundPack } from "./prep-schemas";
 
 export const BANNED_PHRASES = [
   "I am excited to",
@@ -288,5 +288,124 @@ ${groundingRules()}
 ${input.cv ? cvBlock(input.cv) : ""}
 ${interview}${input.daysSinceApplied !== null ? `\nDays since applying: ${input.daysSinceApplied}\n` : ""}
 Write the ${input.kind.replace("_", " ")} message.`;
+  return { system, prompt };
+}
+
+// ---------------------------------------------------------------------------
+// Quick study plan (per scheduled interview): condenses all prep material into a
+// day-by-day countdown.
+// ---------------------------------------------------------------------------
+
+/** Caps a section so a large prep module never blows the context window. */
+function clip(text: string, max = 2500): string {
+  return text.length <= max ? text : `${text.slice(0, max)}\n…(truncated)`;
+}
+
+export interface QuickPlanInput {
+  cv: ParsedCv;
+  job: Job;
+  interviewType: InterviewType;
+  /** Human-readable interview date/time in the candidate's timezone. */
+  interviewAt: string;
+  mode: "days" | "same_day";
+  /** Allowed plan dates, YYYY-MM-DD, with a weekday label for the model. */
+  dates: Array<{ date: string; weekday: string }>;
+  minutesPerDay: number;
+  stories: StarStory[];
+  gapBrief: GapBrief | null;
+  roundPack: RoundPack | null;
+  interviewPrep: InterviewPrep | null;
+  mockReport: MockReport | null;
+  /** Other scheduled interviews (any application) on the plan dates. */
+  otherRounds: Array<{ date: string; label: string }>;
+  interviewerRole?: string;
+  /** Language of the plan text (the candidate's UI language). */
+  planLanguage: MaterialLanguage;
+  /** Language of the interview (cheat sheet lines). */
+  materialLanguage: MaterialLanguage;
+}
+
+function roundPackBlock(pack: RoundPack | null): string {
+  if (!pack) return "";
+  const lines = [
+    `Focus: ${pack.focus}`,
+    "Likely questions:",
+    ...pack.likely_questions.map((q) => `- ${q.question}${q.story ? ` [story: ${q.story}]` : ""}`),
+    "Questions to ask:",
+    ...pack.questions_to_ask.map((q) => `- ${q.question}`),
+    ...(pack.study_plan.length ? ["Study topics:", ...pack.study_plan.map((d) => `- ${d.topic}: ${d.why}`)] : []),
+    ...(pack.pitfalls.length ? ["Pitfalls:", ...pack.pitfalls.map((p) => `- ${p}`)] : []),
+  ];
+  return `\n<round_pack>\n${clip(lines.join("\n"))}\n</round_pack>\n`;
+}
+
+function interviewPrepBlocks(prep: InterviewPrep | null): string {
+  if (!prep) return "";
+  const out: string[] = [];
+  const pitch = [prep.pitch_casual, prep.pitch_formal, prep.pitch_technical].find((p) => p.trim());
+  if (pitch) out.push(`<pitch>\n${clip(pitch, 1200)}\n</pitch>`);
+  if (prep.strengths.length || prep.weaknesses.length) {
+    const lines = [
+      ...prep.strengths.map((s) => `+ ${s.strength}: ${s.example}`),
+      ...prep.weaknesses.map((w) => `- ${w.weakness}: ${w.response}`),
+    ];
+    out.push(`<strengths_weaknesses>\n${clip(lines.join("\n"), 1500)}\n</strengths_weaknesses>`);
+  }
+  if (prep.custom_questions.length) {
+    out.push(
+      `<custom_questions>\n${clip(prep.custom_questions.map((q) => `- ${q.question}`).join("\n"), 1000)}\n</custom_questions>`,
+    );
+  }
+  return out.length ? `\n${out.join("\n\n")}\n` : "";
+}
+
+function mockBlock(report: MockReport | null): string {
+  if (!report) return "";
+  const lines = [
+    report.summary,
+    ...report.recurring_gaps.map((g) => `Gap: ${g}`),
+    ...report.stories_to_prepare.map((s) => `Story to prepare: ${s.title} (${s.competency})`),
+    ...report.review_topics.map((t) => `Review: ${t}`),
+  ];
+  return `\n<mock_feedback>\n${clip(lines.join("\n"), 1200)}\n</mock_feedback>\n`;
+}
+
+export function buildQuickPlanPrompt(input: QuickPlanInput): PromptPair {
+  const sameDay = input.mode === "same_day";
+  const system = `You are an interview coach turning a candidate's full preparation material into a short, realistic countdown plan for ONE interview round.
+
+## This round
+${ROUND_GUIDANCE[input.interviewType]}${input.interviewerRole ? `\nInterviewer: ${input.interviewerRole}.` : ""}
+Interview: ${input.interviewAt}.
+
+${groundingRules()}
+
+## How to plan
+- Condense; do not repeat the material. Each task is something concrete the candidate does (rehearse, write, review, practice), naming the exact story, topic or question — and "source" says which material it uses: fit (<fit_analysis>), round_pack, stories, pitch, strengths, mock, job_post or cv.
+- ${sameDay ? "The interview is TODAY: produce a single entry for the date in <plan_dates> — a focused block of about " + input.minutesPerDay + " minutes before the interview (quick review, pitch out loud once, logistics check). No new learning." : `Use exactly the dates in <plan_dates>, one entry each, in order. Tasks per day should add up to about ${input.minutesPerDay} minutes.`}
+- Order by impact: for technical/system design rounds, must-have gaps first; for phone screens, pitch, motivation, salary expectations and remote logistics; for behavioral/hiring manager, STAR stories mapped to the post; for take-home, scope, time-box and delivery.
+- ${sameDay ? "" : "The day before the interview is for rehearsal (pitch out loud, a mock interview, re-reading the cheat sheet), not new topics. "}If <other_rounds> lists another interview on a date, keep that date light (15–20 minutes at most).
+- If practice material is missing (no stories, no mock), include tasks to create it and list it in not_ready.
+
+## Languages
+- Write headline, key_messages, focus, task titles/details, day_of and not_ready in ${LANGUAGE_NAME[input.planLanguage]}.
+- Write cheat_sheet (opener, stories, questions_to_ask) in ${LANGUAGE_NAME[input.materialLanguage]}, the language of the interview.`;
+
+  const dates = input.dates.map((d) => `- ${d.date} (${d.weekday})`).join("\n");
+  const others = input.otherRounds.length
+    ? `\n<other_rounds>\n${input.otherRounds.map((r) => `- ${r.date}: ${r.label}`).join("\n")}\n</other_rounds>\n`
+    : "";
+  const prompt = `<plan_dates>
+${dates}
+Minutes per day: ${input.minutesPerDay}
+</plan_dates>
+${others}
+${jobBlock(input.job)}
+
+${cvBlock(input.cv)}
+
+${storiesBlock(input.stories)}
+${gapBriefBlock(input.gapBrief)}${roundPackBlock(input.roundPack)}${interviewPrepBlocks(input.interviewPrep)}${mockBlock(input.mockReport)}
+Build the countdown plan for the ${input.interviewType.replace("_", " ")} round.`;
   return { system, prompt };
 }

@@ -471,5 +471,56 @@
     "improve": "Prueba",
     "cv_fact": "De tu CV podrías mencionar",
     "stronger_opening": "Mejor comienzo"
+  },
+  "quick_plan": {
+    "title": "Plan de estudio rápido",
+    "countdown": "{{round}} · {{in}}",
+    "today_at": "hoy a las {{time}}",
+    "today": "Hoy",
+    "tomorrow": "Mañana",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min",
+    "earlier_days_one": "{{count}} día anterior",
+    "earlier_days_other": "{{count}} días anteriores",
+    "key_messages": "Transmite esto",
+    "cheat_sheet": "Chuleta",
+    "stories": "Historias listas",
+    "numbers": "Cifras para mencionar",
+    "ask_them": "Pregúntales",
+    "day_of": "El día de la entrevista",
+    "not_ready": "Aún falta",
+    "failed": "No se pudo generar el plan.",
+    "none": "Aún no hay plan de estudio.",
+    "ready_later": "El plan estará listo una semana antes de la entrevista.",
+    "generate": "Generar plan",
+    "refresh": "Regenerar plan",
+    "outdated": "Desactualizado, regenerar",
+    "show_full": "Ver plan completo",
+    "hide_full": "Ocultar plan completo",
+    "next_day": "Siguiente: {{day}} · {{focus}}",
+    "starts_on": "El plan empieza el {{date}}",
+    "budget": "Tiempo por día",
+    "budget_option": {
+      "30": "30 min / día",
+      "60": "1 h / día",
+      "120": "2 h / día",
+      "180": "3 h+ / día"
+    },
+    "step": {
+      "queued": "Esperando a que termine otro plan…",
+      "fit": "Preparando el análisis de encaje…",
+      "round": "Creando el paquete de la ronda…",
+      "plan": "Condensando tu plan…"
+    },
+    "source": {
+      "fit": "Encaje",
+      "round_pack": "Ronda",
+      "stories": "STAR",
+      "pitch": "Pitch",
+      "strengths": "Fortalezas",
+      "mock": "Práctica",
+      "job_post": "Oferta",
+      "cv": "CV"
+    }
   }
 }

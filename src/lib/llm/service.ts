@@ -22,7 +22,9 @@ import {
   buildMessageDraftPrompt,
   buildMockReportPrompt,
   buildMockTurnPrompt,
+  buildQuickPlanPrompt,
   buildRoundPackPrompt,
+  type QuickPlanInput,
   type MessageDraftInput,
   type MockTurnInput,
   type RoundPackInput,
@@ -32,11 +34,13 @@ import {
   messageDraftSchema,
   mockReportSchema,
   mockTurnSchema,
+  quickPlanSchema,
   roundPackSchema,
   type GapBrief,
   type MessageDraft,
   type MockReport,
   type MockTurnResult,
+  type QuickPlan,
   type RoundPack,
 } from "./prep-schemas";
 import type { MaterialLanguage } from "./language";
@@ -467,6 +471,10 @@ export class LlmService {
     abortSignal?: AbortSignal,
   ): Promise<MockReport> {
     return this.structured(mockReportSchema, "MockInterviewReport", buildMockReportPrompt(input), abortSignal);
+  }
+
+  generateQuickPlan(input: QuickPlanInput, abortSignal?: AbortSignal): Promise<QuickPlan> {
+    return this.structured(quickPlanSchema, "QuickStudyPlan", buildQuickPlanPrompt(input), abortSignal);
   }
 
   draftMessage(input: MessageDraftInput, abortSignal?: AbortSignal): Promise<MessageDraft> {

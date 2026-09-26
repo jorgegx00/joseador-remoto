@@ -40,6 +40,7 @@ import { ApplicationTimeline } from "@/features/applications/components/Applicat
 import { ApplicationNotes } from "@/features/applications/components/ApplicationNotes";
 import { InterviewScheduler } from "@/features/applications/components/InterviewScheduler";
 import { MessageDraftDialog } from "@/features/applications/components/MessageDraftDialog";
+import { QuickStudyPlan } from "@/features/interview-prep/components/QuickStudyPlan";
 import {
   Dialog,
   DialogContent,
@@ -462,6 +463,11 @@ export function ApplicationDetailPage() {
                                 </Button>
                               )}
                           </div>
+
+                          {interview.status === "scheduled" &&
+                            interview.scheduled_at > Date.now() && (
+                              <QuickStudyPlan interview={interview} variant="compact" />
+                            )}
 
                           {interview.interviewer_name && (
                             <p className="text-sm">

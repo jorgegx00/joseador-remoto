@@ -4,6 +4,7 @@ import { eq, and, or, ne, desc, asc, like, sql, inArray, notInArray } from "driz
 import { ulid } from "ulid";
 import * as schema from "@/db/schema";
 import { jobMatchesTagFilters } from "@/features/jobs/utils/jobTaxonomy";
+import { emitPrepDocumentChanged } from "./prep-events";
 import type { Job, JobSource, Company, CvRecord, NewCvRecord, ParsedCv, Application, ApplicationEvent, Interview, AtsReport, GeneratedCv, ScrapeRun, CoverLetter } from "@/types";
 import type { StarStory, InterviewPrep, GlassdoorInterviewReview, MatchAnalysisRecord, MatchAnalysis } from "@/types";
 import type { MockSession, PrepDocument, PrepDocumentKind } from "@/types";
@@ -1261,6 +1262,7 @@ export async function upsertPrepDocument<T>(
       target: [schema.prepDocuments.application_id, schema.prepDocuments.interview_id, schema.prepDocuments.kind],
       set: { language: doc.language, content, updated_at: now },
     });
+  emitPrepDocumentChanged({ applicationId: doc.application_id, kind: doc.kind, interviewId: doc.interview_id });
   return (await getPrepDocument<T>(doc.application_id, doc.kind, doc.interview_id))!;
 }
 

@@ -86,7 +86,7 @@ export interface ChecklistState {
 // LLM prep documents grounded in CV + job post
 // ---------------------------------------------------------------------------
 
-export type PrepDocumentKind = "gap_brief" | "round_pack";
+export type PrepDocumentKind = "gap_brief" | "round_pack" | "study_plan";
 
 export interface PrepDocument<T = unknown> {
   id: string;

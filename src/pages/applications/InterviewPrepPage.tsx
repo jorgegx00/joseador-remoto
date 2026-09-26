@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams, useSearch, Link } from "@tanstack/react-router";
+import { useParams, useSearch, useNavigate, Link } from "@tanstack/react-router";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +28,9 @@ import { resolveMaterialLanguage, type MaterialLanguage } from "@/lib/llm/langua
 import { useApplicationPrepData } from "@/features/interview-prep/hooks/useApplicationPrepData";
 import { useGlassdoorReviews } from "@/features/interview-prep/hooks/useGlassdoorReviews";
 import { GapBriefPanel } from "@/features/interview-prep/components/GapBriefPanel";
-import { RoundPrepPanel } from "@/features/interview-prep/components/RoundPrepPanel";
+import { RoundPrepPanel, defaultRoundKey } from "@/features/interview-prep/components/RoundPrepPanel";
+import { QuickStudyPlan } from "@/features/interview-prep/components/QuickStudyPlan";
+import type { PlanSource } from "@/lib/llm/prep-schemas";
 import { CompanyBrief } from "@/features/interview-prep/components/CompanyBrief";
 import { GlassdoorReviews } from "@/features/interview-prep/components/GlassdoorReviews";
 import { PitchBuilder } from "@/features/interview-prep/components/PitchBuilder";
@@ -56,6 +58,32 @@ export function InterviewPrepPage() {
   useEffect(() => {
     if (application) setSelectedCvId((cur) => cur ?? application.cv_id);
   }, [application]);
+
+  const navigate = useNavigate();
+  const [tab, setTab] = useState("round");
+  const [roundKeyState, setRoundKey] = useState<string | null>(null);
+  // Interviews load after the first render; default to the requested / next round then.
+  const roundKey = roundKeyState ?? defaultRoundKey(interviews, search.interview);
+  const selectedInterview = interviews.find((i) => i.id === roundKey) ?? null;
+
+  const openSource = (source: PlanSource) => {
+    const tabs: Partial<Record<PlanSource, string>> = {
+      fit: "fit",
+      round_pack: "round",
+      stories: "star",
+      pitch: "pitch",
+      strengths: "strengths",
+    };
+    if (source === "mock") {
+      void navigate({
+        to: "/applications/$appId/mock",
+        params: { appId },
+        search: selectedInterview ? { interview: selectedInterview.id } : {},
+      });
+    } else if (tabs[source]) {
+      setTab(tabs[source]);
+    }
+  };
 
   const autoLanguage = resolveMaterialLanguage(job, i18n.language);
   const language = languageOverride === "auto" ? autoLanguage : languageOverride;
@@ -122,7 +150,11 @@ export function InterviewPrepPage() {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="round">
+        {selectedInterview && (
+          <QuickStudyPlan interview={selectedInterview} variant="full" onOpenSource={openSource} />
+        )}
+
+        <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="flex h-auto w-full flex-wrap justify-start">
             <TabsTrigger value="round" className="flex items-center gap-1.5">
               <ListChecks className="h-3.5 w-3.5" />
@@ -180,7 +212,8 @@ export function InterviewPrepPage() {
               cv={parsedCv}
               job={job}
               interviews={interviews}
-              initialInterviewId={search.interview}
+              roundKey={roundKey}
+              onRoundKeyChange={setRoundKey}
               language={language}
             />
           </TabsContent>

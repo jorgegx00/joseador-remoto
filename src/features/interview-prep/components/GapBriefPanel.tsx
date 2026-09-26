@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import type { GapBrief } from "@/lib/llm/prep-schemas";
 import type { MaterialLanguage } from "@/lib/llm/language";
 import type { Job, ParsedCv } from "@/types";
+import { produceGapBrief } from "@/services/prep-generation";
 import { usePrepDocument } from "../hooks/usePrepDocument";
 import { PrepGenerateHeader } from "./PrepGenerateHeader";
 import { NeedsInputCard } from "./NeedsInputCard";
@@ -34,7 +35,9 @@ export function GapBriefPanel({ applicationId, cv, job, language }: GapBriefPane
 
   const handleGenerate = () => {
     if (!cv || !job) return;
-    void generate(language, (llm, signal) => llm.generateGapBrief({ cv, job, language }, signal));
+    void generate(language, (llm, signal) =>
+      produceGapBrief(llm, { applicationId, cvId: null, cv, job }, language, signal),
+    );
   };
 
   return (

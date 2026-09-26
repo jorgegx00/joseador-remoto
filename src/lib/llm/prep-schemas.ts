@@ -121,3 +121,40 @@ export const messageDraftSchema = z.object({
   body: z.string().describe("The message body, ready to send after the candidate reviews it"),
 });
 export type MessageDraft = z.infer<typeof messageDraftSchema>;
+
+export const PLAN_SOURCES = ["fit", "round_pack", "stories", "pitch", "strengths", "mock", "job_post", "cv"] as const;
+export type PlanSource = (typeof PLAN_SOURCES)[number];
+
+export const quickPlanSchema = z.object({
+  headline: z.string().describe("One line: the single most important focus for this round"),
+  key_messages: z
+    .array(z.string())
+    .describe("Exactly 3 things the candidate must get across, each tied to a specific CV fact"),
+  days: z
+    .array(
+      z.object({
+        date: z.string().describe("One of the dates listed in <plan_dates>, YYYY-MM-DD"),
+        focus: z.string().describe("Theme of the day in a few words"),
+        tasks: z
+          .array(
+            z.object({
+              title: z.string().describe("Short imperative task, e.g. 'Rehearse your 60-second pitch out loud'"),
+              detail: z.string().describe("One sentence: exactly what to do, naming the story / topic / question"),
+              minutes: z.number().int().describe("Time box in minutes"),
+              source: z.enum(PLAN_SOURCES).describe("Which prep material this task uses"),
+            }),
+          )
+          .describe("2–4 tasks whose minutes add up to about the daily budget"),
+      }),
+    )
+    .describe("One entry per date in <plan_dates>, in order"),
+  cheat_sheet: z.object({
+    opener: z.string().describe("Opening line for 'tell me about yourself', in the interview language"),
+    stories: z.array(z.string()).describe("2–4 stories to have ready: 'Title — one line', in the interview language"),
+    numbers: z.array(z.string()).describe("Figures worth quoting, ONLY if they appear in the CV or prep material"),
+    questions_to_ask: z.array(z.string()).describe("2–3 questions to ask them, in the interview language"),
+  }),
+  day_of: z.array(z.string()).describe("3–6 item checklist for the interview day (logistics, timezone, setup, last-30-minutes review)"),
+  not_ready: z.array(z.string()).describe("Prep that is still missing and worth doing; empty if none"),
+});
+export type QuickPlan = z.infer<typeof quickPlanSchema>;

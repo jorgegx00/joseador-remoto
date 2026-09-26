@@ -6,6 +6,7 @@ import { CancelledError, describeLlmError } from "@/lib/llm/errors";
 import type { MaterialLanguage } from "@/lib/llm/language";
 import { getActiveLlmConfig } from "@/services/llm-active";
 import { getPrepDocument, upsertPrepDocument } from "@/services/database";
+import { onPrepDocumentChanged } from "@/services/prep-events";
 import { useSettingsStore } from "@/stores/settingsStore";
 import type { PrepDocument, PrepDocumentKind } from "@/types";
 
@@ -29,6 +30,16 @@ export function usePrepDocument<T>(
   const [isGenerating, setIsGenerating] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const hasLlm = useSettingsStore((s) => s.llm.active_provider !== null);
+
+  // Reload when this document is (re)generated elsewhere, e.g. by the quick study plan.
+  useEffect(
+    () =>
+      onPrepDocumentChanged((c) => {
+        if (c.applicationId !== applicationId || c.kind !== kind || c.interviewId !== interviewId) return;
+        void getPrepDocument<T>(applicationId, kind, interviewId).then(setDoc).catch(() => {});
+      }),
+    [applicationId, kind, interviewId],
+  );
 
   useEffect(() => {
     let cancelled = false;

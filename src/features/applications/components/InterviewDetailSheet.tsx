@@ -41,6 +41,7 @@ import { useApplicationStore } from "@/stores/applicationStore";
 import { getJobById, getCompanyById } from "@/services/database";
 import { getInterviewTypeColor } from "./InterviewCard";
 import { InterviewScheduler } from "./InterviewScheduler";
+import { QuickStudyPlan } from "@/features/interview-prep/components/QuickStudyPlan";
 import type { Interview, InterviewOutcome } from "@/types";
 import type { Job, Company } from "@/types";
 
@@ -144,6 +145,7 @@ export function InterviewDetailSheet({
     void navigate({
       to: "/applications/$appId/prep",
       params: { appId: interview.application_id },
+      search: { interview: interview.id },
     });
     onOpenChange(false);
   }, [interview, navigate, onOpenChange]);
@@ -319,6 +321,9 @@ export function InterviewDetailSheet({
                 </Button>
               </div>
             )}
+
+            {/* Quick study plan for upcoming rounds */}
+            <QuickStudyPlan interview={interview} variant="compact" />
 
             {/* Action buttons */}
             <div className="space-y-2">

@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "@tanstack/react-router";
-import { differenceInCalendarDays, format } from "date-fns";
+import { format } from "date-fns";
 import { es, enUS } from "date-fns/locale";
 import { AlertTriangle, BookMarked, CalendarDays, HelpCircle, MessagesSquare, Mic, Target } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,8 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { getPrepDocument, getStarStoriesByCvId } from "@/services/database";
-import type { GapBrief, RoundPack } from "@/lib/llm/prep-schemas";
+import { produceRoundPack } from "@/services/prep-generation";
+import type { RoundPack } from "@/lib/llm/prep-schemas";
 import type { MaterialLanguage } from "@/lib/llm/language";
 import type { Interview, InterviewType, Job, ParsedCv } from "@/types";
 import { usePrepDocument } from "../hooks/usePrepDocument";
@@ -105,7 +105,9 @@ interface RoundPrepPanelProps {
   cv: ParsedCv | null;
   job: Job | null;
   interviews: Interview[];
-  initialInterviewId?: string;
+  /** Selected round (see roundKey); controlled by the prep page so the quick plan follows it. */
+  roundKey: string;
+  onRoundKeyChange: (key: string) => void;
   language: MaterialLanguage;
 }
 
@@ -115,18 +117,12 @@ export function RoundPrepPanel({
   cv,
   job,
   interviews,
-  initialInterviewId,
+  roundKey: key,
+  onRoundKeyChange: setKey,
   language,
 }: RoundPrepPanelProps) {
   const { t } = useTranslation("interview-prep");
   const navigate = useNavigate();
-  const [key, setKey] = useState(() => defaultRoundKey(interviews, initialInterviewId));
-
-  // Interviews arrive after the first render; pick the right default once they do.
-  useEffect(() => {
-    setKey((k) => (k === "type:phone_screen" ? defaultRoundKey(interviews, initialInterviewId) : k));
-  }, [interviews, initialInterviewId]);
-
   const { interview, type } = useMemo(() => resolveRound(key, interviews), [key, interviews]);
   const { doc, isLoading, isGenerating, hasLlm, generate, cancel } = usePrepDocument<RoundPack>(
     applicationId,
@@ -137,26 +133,9 @@ export function RoundPrepPanel({
 
   const handleGenerate = () => {
     if (!cv || !job) return;
-    void generate(language, async (llm, signal) => {
-      const [stories, brief] = await Promise.all([
-        cvId ? getStarStoriesByCvId(cvId).catch(() => []) : Promise.resolve([]),
-        getPrepDocument<GapBrief>(applicationId, "gap_brief").catch(() => null),
-      ]);
-      return llm.generateRoundPack(
-        {
-          cv,
-          job,
-          interviewType: type,
-          daysUntil: interview ? Math.max(0, differenceInCalendarDays(interview.scheduled_at, Date.now())) : null,
-          stories,
-          gapBrief: brief?.content ?? null,
-          interviewerRole: interview?.interviewer_role || undefined,
-          notes: interview?.notes || undefined,
-          language,
-        },
-        signal,
-      );
-    });
+    void generate(language, (llm, signal) =>
+      produceRoundPack(llm, { applicationId, cvId, cv, job }, { interview, type }, language, signal),
+    );
   };
 
   const practice = () =>
