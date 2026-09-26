@@ -70,6 +70,53 @@ export function parseCvDate(input: string): CvDate | null {
   return PRESENT_RE.test(t) ? "present" : null;
 }
 
+const DATE_TOKEN = `(?:(?:${MONTH_WORDS})\\.?,?\\s+(?:de\\s+)?(?:19|20)\\d{2}|\\d{1,2}[-/.](?:19|20)\\d{2}|(?:19|20)\\d{2}[-/.]\\d{1,2}|(?:19|20)\\d{2})`;
+const PRESENT_TOKEN =
+  "(?:present|current|currently|now|today|ongoing|actualidad|actual|actualmente|presente|hoy|la fecha|en curso)";
+const DATE_RANGE_RE = new RegExp(
+  `(${DATE_TOKEN})\\s*(?:[-–—]+|\\bto\\b|\\ba\\b|\\bhasta\\b|\\bal?\\b)\\s*(${DATE_TOKEN}|${PRESENT_TOKEN})`,
+  "i",
+);
+const SINGLE_DATE_RE = new RegExp(`(${DATE_TOKEN})`, "i");
+
+export interface DateRangeMatch {
+  /** The matched text, verbatim ("08/2024 - Present"). */
+  text: string;
+  /** Start as written ("08/2024"). */
+  start: string;
+  /** End as written, or null when the role is current. */
+  end: string | null;
+}
+
+/**
+ * Finds a date range in a line and returns its parts verbatim, keeping the CV's own
+ * format ("January 2021", "01/2021", "2016"). A lone date counts as a range with the
+ * same start and end ("2019" for a degree).
+ */
+export function findDateRange(text: string): DateRangeMatch | null {
+  // Strip accents one character at a time so indexes still match `text`.
+  const normalized = text.replace(/[^\u0000-\u007f]/g, (c) => {
+    const base = stripAccents(c);
+    return base.length === 1 ? base : c;
+  });
+  const range = DATE_RANGE_RE.exec(normalized);
+  if (range) {
+    // Slice the original text so accents survive ("Enero 2021 – Actualidad").
+    const original = text.slice(range.index, range.index + range[0].length);
+    const startOriginal = text.slice(range.index, range.index + range[1].length);
+    const endOffset = range.index + range[0].length - range[2].length;
+    const endOriginal = text.slice(endOffset, range.index + range[0].length);
+    const end = parseCvDate(range[2]) === "present" ? null : endOriginal;
+    return { text: original, start: startOriginal.trim(), end: end?.trim() ?? null };
+  }
+  const single = SINGLE_DATE_RE.exec(normalized);
+  if (single) {
+    const original = text.slice(single.index, single.index + single[0].length).trim();
+    return { text: original, start: original, end: original };
+  }
+  return null;
+}
+
 /**
  * Total professional experience in whole years: union of the role intervals (overlaps
  * merged, so parallel jobs don't double count), floored. A year-only start counts from

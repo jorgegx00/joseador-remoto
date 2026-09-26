@@ -13,7 +13,7 @@ import { parseTailoredMarkdown } from "./tailored-cv";
 import { getActiveLlmConfig } from "./llm-active";
 import { formatCvAsMarkdown } from "@/lib/cv/formatCvAsMarkdown";
 import { ulid } from "ulid";
-import type { ParsedCv, AtsReport, AtsCheckResult, KeywordMatch, AtsIssue, CvRecord } from "@/types";
+import type { ParsedCv, AtsReport, AtsCheckResult, KeywordMatch, AtsIssue, CvRecord, CvLayoutLine } from "@/types";
 
 // --------------------------------------------------------------------------
 // CV file management
@@ -87,19 +87,20 @@ export const cvService = {
       await invoke("start_sidecar");
     }
 
-    let resolveParsed!: (value: { text: string; parsed: ParsedCv }) => void;
+    type ParsedPayload = { text: string; parsed: ParsedCv; lines?: CvLayoutLine[] };
+    let resolveParsed!: (value: ParsedPayload) => void;
     let rejectParsed!: (reason: unknown) => void;
-    const parsedPromise = new Promise<{ text: string; parsed: ParsedCv }>((resolve, reject) => {
+    const parsedPromise = new Promise<ParsedPayload>((resolve, reject) => {
       resolveParsed = resolve;
       rejectParsed = reject;
     });
 
-    const unlistenParsed = await listen<{ cv_id: string; text: string; parsed: ParsedCv }>(
+    const unlistenParsed = await listen<{ cv_id: string } & ParsedPayload>(
       "scraper:cv-parsed",
       (event) => {
         const payload = event.payload;
         if (payload.cv_id === cvId) {
-          resolveParsed({ text: payload.text, parsed: payload.parsed });
+          resolveParsed({ text: payload.text, parsed: payload.parsed, lines: payload.lines });
         }
       },
     );
@@ -128,8 +129,8 @@ export const cvService = {
         }),
       });
 
-      const { text, parsed } = await parsedPromise;
-      await updateCvParsedData(cvId, text, parsed);
+      const { text, parsed, lines } = await parsedPromise;
+      await updateCvParsedData(cvId, text, parsed, lines && lines.length > 0 ? lines : null);
     } finally {
       clearTimeout(timeout);
       unlistenParsed();

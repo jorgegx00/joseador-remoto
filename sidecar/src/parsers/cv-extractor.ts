@@ -4,7 +4,7 @@
  * Supports both English and Spanish CVs.
  */
 
-import type { ParsedCvResult } from "../types.js";
+import type { CvLine, ParsedCvResult } from "../types.js";
 
 // ─── SECTION HEADER DEFINITIONS ───────────────────────────────────────────────
 
@@ -758,6 +758,11 @@ function splitIntoSections(
   return sections;
 }
 
+// Soft skills are a small, recognizable vocabulary; anything else on a skills
+// line (tools, products, frameworks we don't know) is far more likely technical.
+const SOFT_SKILL_RE =
+  /\b(?:communicat|leadership|lead(?:ing)? teams?|team ?work|teamwork|collaborat|problem[- ]solving|critical thinking|adaptab|flexib|time management|creativ|negotiat|empath|mentor|coaching|presentation|public speaking|interpersonal|organi[sz]ation|attention to detail|self[- ]motivat|proactiv|work ethic|decision[- ]making|conflict|emotional intelligence|customer service|stakeholder|comunicaci|liderazgo|trabajo en equipo|resoluci[oó]n de problemas|pensamiento cr[ií]tico|adaptabilidad|gesti[oó]n del tiempo|creatividad|negociaci|empat[ií]a|proactiv|responsab|organizaci[oó]n|colaboraci|toma de decisiones)/i;
+
 function categorizeSKill(skill: string): "technical" | "soft" {
   const lower = skill.toLowerCase().trim();
 
@@ -773,7 +778,7 @@ function categorizeSKill(skill: string): "technical" | "soft" {
     }
   }
 
-  return "soft";
+  return SOFT_SKILL_RE.test(lower) ? "soft" : "technical";
 }
 
 function splitSkills(text: string): string[] {
@@ -1051,6 +1056,183 @@ function parseExperienceSection(content: string): RawExperienceEntry[] {
   flushCurrent();
 
   return entries;
+}
+
+
+// ─── LAYOUT-AWARE ENTRY PARSING ──────────────────────────────────────────────
+//
+// With layout lines (see layout.ts) entries can be split on what the document
+// shows rather than guessed from keywords: a larger vertical gap or a return to
+// the left margin after indented lines starts a new entry, and the first 1-3
+// short, unindented lines are the entry's header (company/title/location/dates).
+
+const ENTRY_GAP = 1.4;
+const HEADER_PART_SPLIT = /\s+[|•·]\s+|\s+[–—]\s+|\s+-\s+(?=[A-ZÀ-Ý])|\s+(?:at|en|@)\s+(?=[A-ZÀ-Ý])/;
+const LOCATION_WORDS = /\b(?:remote|remoto|hybrid|h[ií]brido|on-?site|presencial)\b/i;
+const COMPANY_SUFFIX = /\b(?:inc|llc|ltd|gmbh|s\.?a|s\.?r\.?l|corp|co)\.?$/i;
+const INSTITUTION_WORDS = /universi|college|institut|school|liceo|colegio|academ|escuela|polit[eé]cnic/i;
+const TECH_LINE = /^(technologies|tech stack|tools|stack|tecnolog[ií]as|herramientas)\s*[:：]/i;
+
+function stripDateRange(text: string): string {
+  return text
+    .replace(DATE_RANGE_MONTH_YEAR, "")
+    .replace(DATE_RANGE_NUMERIC, "")
+    .replace(DATE_RANGE_YEAR_ONLY, "")
+    .replace(/[()]/g, " ")
+    .replace(/^[\s|,•·\-–—]+/, "")
+    .replace(/[\s|,•·\-–—]+$/, "")
+    .trim();
+}
+
+function looksLikeLocation(part: string): boolean {
+  if (LOCATION_WORDS.test(part)) return true;
+  return /^[A-ZÀ-Ý][\p{L} .'-]+,\s*[A-ZÀ-Ý][\p{L} .'-]+$/u.test(part) && !COMPANY_SUFFIX.test(part);
+}
+
+function isBodyLine(line: CvLine): boolean {
+  return line.bullet || line.indent > 0 || isBulletLine(line.text);
+}
+
+/** Splits a section's lines into entry blocks. */
+function splitEntryBlocks(lines: CvLine[]): CvLine[][] {
+  const blocks: CvLine[][] = [];
+  let current: CvLine[] = [];
+  lines.forEach((line, i) => {
+    const prev = lines[i - 1];
+    const nextHasDate = [line, lines[i + 1], lines[i + 2]].some((l) => l && !isBodyLine(l) && hasDateRange(l.text));
+    const startsEntry =
+      current.length > 0 &&
+      !isBodyLine(line) &&
+      (line.gap >= ENTRY_GAP || (prev !== undefined && isBodyLine(prev) && nextHasDate));
+    if (startsEntry) {
+      blocks.push(current);
+      current = [];
+    }
+    current.push(line);
+  });
+  if (current.length > 0) blocks.push(current);
+  return blocks;
+}
+
+/** Leading unindented, non-sentence lines of a block (max 3) form its header. */
+function blockHeader(block: CvLine[]): { header: CvLine[]; body: CvLine[] } {
+  let n = 0;
+  while (
+    n < block.length &&
+    n < 3 &&
+    !isBodyLine(block[n]) &&
+    block[n].text.length <= 120 &&
+    (n === 0 || !/[.!?]$/.test(block[n].text.trim()))
+  ) {
+    n++;
+  }
+  // A header line ending in a period is body text unless it carries the dates.
+  while (n > 1 && /[.!?]$/.test(block[n - 1].text.trim()) && !hasDateRange(block[n - 1].text)) n--;
+  return { header: block.slice(0, Math.max(n, 1)), body: block.slice(Math.max(n, 1)) };
+}
+
+function headerParts(header: CvLine[]): { parts: string[]; dates: { start: string; end: string | null } | null } {
+  let dates: { start: string; end: string | null } | null = null;
+  const parts: string[] = [];
+  for (const line of header) {
+    const range = extractDateRange(line.text);
+    if (range && !dates) dates = range;
+    const rest = range ? stripDateRange(line.text) : line.text.trim();
+    for (const part of rest.split(HEADER_PART_SPLIT)) {
+      const cleaned = part.replace(/^[\s|,•·]+|[\s|,•·]+$/g, "").trim();
+      if (cleaned) parts.push(cleaned);
+    }
+  }
+  return { parts, dates };
+}
+
+function parseExperienceBlock(block: CvLine[]): RawExperienceEntry {
+  const { header, body } = blockHeader(block);
+  const { parts, dates } = headerParts(header);
+
+  const location = parts.find(looksLikeLocation) ?? "";
+  const rest = parts.filter((p) => p !== location);
+  const titleIndex = rest.findIndex((p) => containsRoleKeyword(p));
+  let title = titleIndex >= 0 ? rest[titleIndex] : "";
+  let company = rest.find((_, i) => i !== titleIndex) ?? "";
+  if (!title && rest.length >= 2) {
+    // "Company | Location" then "Title | dates": the dated line holds the title.
+    const datedLine = header.find((l) => hasDateRange(l.text));
+    const datedRest = datedLine ? stripDateRange(datedLine.text).split(HEADER_PART_SPLIT)[0]?.trim() : "";
+    title = datedRest && datedRest !== company ? datedRest : rest[1];
+    company = rest.find((p) => p !== title) ?? "";
+  }
+
+  const achievements: string[] = [];
+  const descParts: string[] = [];
+  const technologies: string[] = [];
+  for (const line of body) {
+    const text = line.text.replace(/^[•\-*·▪▸►➤✓✔→➜◆◇○●■□▶»›]\s*/, "").trim();
+    if (!text) continue;
+    if (TECH_LINE.test(text)) {
+      technologies.push(...splitSkills(text.replace(/^[^:：]+[:：]\s*/, "")));
+    } else if (isBodyLine(line) || /[.!?]$/.test(text) || text.length < 200) {
+      achievements.push(text);
+    } else {
+      descParts.push(text);
+    }
+  }
+
+  return {
+    company,
+    location,
+    title,
+    start_date: dates?.start ?? "",
+    end_date: dates?.end ?? null,
+    description: descParts.join(" "),
+    achievements,
+    technologies,
+  };
+}
+
+/**
+ * Layout-based experience parsing. Returns null when the blocks don't look like
+ * dated entries, so the caller can fall back to the text heuristics.
+ */
+function parseExperienceLines(lines: CvLine[]): RawExperienceEntry[] | null {
+  const blocks = splitEntryBlocks(lines);
+  if (blocks.length === 0) return null;
+  const dated = blocks.filter((b) => blockHeader(b).header.some((l) => hasDateRange(l.text)));
+  if (dated.length / blocks.length < 0.7) return null;
+  return blocks.map(parseExperienceBlock).filter((e) => e.title || e.company);
+}
+
+function parseEducationLines(lines: CvLine[]): RawEducationEntry[] | null {
+  const blocks = splitEntryBlocks(lines);
+  if (blocks.length === 0) return null;
+  return blocks.map((block) => {
+    const { parts, dates } = headerParts(block);
+    const location = parts.find(looksLikeLocation) ?? "";
+    const rest = parts.filter((p) => p !== location);
+    const institution = rest.find((p) => INSTITUTION_WORDS.test(p)) ?? rest[0] ?? "";
+    const degreeText = rest.find((p) => p !== institution && containsDegreeKeyword(p)) ?? rest.find((p) => p !== institution) ?? "";
+    const inMatch = /^(.+?)\s+(?:in|en|of|de)\s+(.+)$/i.exec(degreeText);
+    return {
+      institution,
+      location,
+      degree: inMatch ? inMatch[1].trim() : degreeText,
+      field: inMatch ? inMatch[2].trim() : "",
+      start_date: dates?.start ?? "",
+      end_date: dates?.end ?? "",
+      honors: [],
+    };
+  }).filter((e) => e.institution || e.degree);
+}
+
+/** Section split over layout lines (same header rules as splitIntoSections). */
+function splitLinesIntoSections(lines: CvLine[]): { header: SectionCategory | null; lines: CvLine[] }[] {
+  const sections: { header: SectionCategory | null; lines: CvLine[] }[] = [{ header: null, lines: [] }];
+  for (const line of lines) {
+    const category = line.bullet ? null : isSectionHeader(line.text);
+    if (category !== null) sections.push({ header: category, lines: [] });
+    else sections[sections.length - 1].lines.push(line);
+  }
+  return sections;
 }
 
 // ─── EDUCATION PARSING ────────────────────────────────────────────────────────
@@ -1334,9 +1516,10 @@ function parseProjectsSection(content: string): RawProjectEntry[] {
 
 // ─── MAIN EXTRACTION FUNCTION ─────────────────────────────────────────────────
 
-export function extractStructuredCv(rawText: string): ParsedCvResult {
+export function extractStructuredCv(rawText: string, layout?: CvLine[]): ParsedCvResult {
   const text = normalizeWhitespace(rawText);
   const lines = text.split("\n");
+  const layoutSections = layout && layout.length > 0 ? splitLinesIntoSections(layout) : null;
 
   // ── 1. Extract email ──────────────────────────────────────────────────────
   EMAIL_REGEX.lastIndex = 0;
@@ -1384,7 +1567,13 @@ export function extractStructuredCv(rawText: string): ParsedCvResult {
 
   // ── 6. Extract name ───────────────────────────────────────────────────────
   let fullName = "";
-  for (const line of lines.slice(0, 10)) {
+  if (layout && layout.length > 0) {
+    // The name is the most prominent line near the top.
+    const top = layout.slice(0, 5).filter((l) => isNameCandidate(l.text));
+    top.sort((a, b) => b.size - a.size);
+    if (top[0] && top[0].size > 1.05) fullName = top[0].text.trim();
+  }
+  for (const line of fullName ? [] : lines.slice(0, 10)) {
     // Look in the first 10 lines
     const trimmed = line.trim();
     if (!trimmed) continue;
@@ -1431,8 +1620,18 @@ export function extractStructuredCv(rawText: string): ParsedCvResult {
     }
   }
 
+  // With layout, the contact block is the text before the first section heading;
+  // its " | "-separated parts often include the city.
+  if (!location && layoutSections) {
+    const contactParts = layoutSections[0].lines
+      .flatMap((l) => l.text.split(/\s+[|•·]\s+/))
+      .map((p) => p.trim())
+      .filter((p) => p && p !== fullName && !/@|\d{3}|https?:|www\./i.test(p));
+    location = contactParts.find(looksLikeLocation) ?? "";
+  }
+
   // Fallback: look near the top of the document for a location-like line
-  if (!location) {
+  if (!location && !layoutSections) {
     for (const line of lines.slice(0, 8)) {
       const trimmed = line.trim();
       EMAIL_REGEX.lastIndex = 0;
@@ -1505,8 +1704,13 @@ export function extractStructuredCv(rawText: string): ParsedCvResult {
   // ── 10. Extract experience ────────────────────────────────────────────────
   const experienceSections = sections.filter((s) => s.header === "experience");
   const experience: ParsedCvResult["experience"] = [];
-  for (const expSection of experienceSections) {
-    const parsed = parseExperienceSection(expSection.content);
+  const experienceLineSections = layoutSections?.filter((s) => s.header === "experience") ?? [];
+  const layoutExperience =
+    experienceLineSections.length > 0 && experienceLineSections.length === experienceSections.length
+      ? experienceLineSections.map((s) => parseExperienceLines(s.lines))
+      : [];
+  for (const [index, expSection] of experienceSections.entries()) {
+    const parsed = layoutExperience[index] ?? parseExperienceSection(expSection.content);
     for (const entry of parsed) {
       experience.push({
         company: entry.company,
@@ -1524,8 +1728,13 @@ export function extractStructuredCv(rawText: string): ParsedCvResult {
   // ── 11. Extract education ─────────────────────────────────────────────────
   const educationSections = sections.filter((s) => s.header === "education");
   const education: ParsedCvResult["education"] = [];
-  for (const eduSection of educationSections) {
-    const parsed = parseEducationSection(eduSection.content);
+  const educationLineSections = layoutSections?.filter((s) => s.header === "education") ?? [];
+  const layoutEducation =
+    educationLineSections.length > 0 && educationLineSections.length === educationSections.length
+      ? educationLineSections.map((s) => parseEducationLines(s.lines))
+      : [];
+  for (const [index, eduSection] of educationSections.entries()) {
+    const parsed = layoutEducation[index] ?? parseEducationSection(eduSection.content);
     for (const entry of parsed) {
       education.push({
         institution: entry.institution,
@@ -1622,7 +1831,12 @@ export function extractStructuredCv(rawText: string): ParsedCvResult {
   const languages: ParsedCvResult["languages"] = [];
 
   for (const langSection of langSections) {
-    const langLines = langSection.content.split("\n");
+    const langLines = langSection.content.split("\n").flatMap((l) =>
+      // "English, Spanish, German" — a plain list with no levels on the line.
+      /[,|•·]/.test(l) && detectLanguageLevel(l) === "intermediate" && !/intermedi/i.test(l)
+        ? l.split(/[,|•·]/)
+        : [l],
+    );
     for (const ll of langLines) {
       const trimmed = ll.trim().replace(/^[•\-*·▪]\s*/, "").trim();
       const parsed = parseLanguageEntry(trimmed);

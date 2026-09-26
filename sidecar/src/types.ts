@@ -14,6 +14,27 @@ export interface ScrapeResult {
   data: unknown;
 }
 
+/**
+ * One logical line of a CV document with the layout signals the parsers need.
+ * Wrapped continuation lines are already merged into the line they continue.
+ * Mirrored in the app as `CvLayoutLine` (src/types/cv.ts).
+ */
+export interface CvLine {
+  text: string;
+  page: number;
+  /** Font size relative to the document's body text (1 = body size). */
+  size: number;
+  /** 0 = at the column's left edge, 1 = indented (bullets, sub-lines). */
+  indent: number;
+  /** Horizontally centered (typical for names and contact lines). */
+  centered: boolean;
+  /** Vertical gap before the line relative to the normal line spacing (1 = normal). */
+  gap: number;
+  bold: boolean;
+  /** Starts with a bullet glyph or is a list item (the glyph is stripped from `text`). */
+  bullet: boolean;
+}
+
 export interface ParsedCvResult {
   full_name: string;
   email: string;

@@ -81,6 +81,8 @@
     "dialog_description": "The AI will review the original CV text and propose corrections to the extracted fields.",
     "refining": "AI is reviewing your CV...",
     "refining_hint": "This may take a moment depending on your AI provider.",
+    "progress_segmenting": "Finding the sections of your CV…",
+    "progress_entries": "Reading entry {{done}} of {{total}}…",
     "accept_changes": "Accept changes",
     "discard_changes": "Discard",
     "error_title": "Refinement failed",

@@ -1,4 +1,4 @@
-import { generateObject, generateText, streamText } from "ai";
+import { generateText, streamText } from "ai";
 import type { FinishReason, LanguageModelUsage } from "ai";
 import { llmRegistry } from "./registry";
 import * as prompts from "./prompts";
@@ -16,6 +16,10 @@ import {
   type PastedJobExtraction,
 } from "./job-extraction";
 import { CancelledError, LlmRequestError, describeLlmError } from "./errors";
+import { generateValidated } from "./structured";
+import { groundSkillMatches } from "./match-grounding";
+import { canTailorBySection, streamSectionedTailoring } from "./cv-tailor-sectioned";
+import { taskCallSettings, type LlmTask } from "./task-profile";
 import type { z } from "zod";
 import {
   buildGapBriefPrompt,
@@ -44,9 +48,11 @@ import {
   type RoundPack,
 } from "./prep-schemas";
 import type { MaterialLanguage } from "./language";
+import { parseCvWithLlm, type CvParseProgress } from "@/lib/cv/llm-parse";
 import type { LlmProviderConfig } from "./providers/base";
 import type {
   ParsedCv,
+  CvLayoutLine,
   Job,
   MatchAnalysis,
   NarrativeReport,
@@ -93,20 +99,50 @@ export class LlmService {
     return llmRegistry.createModel(this.config);
   }
 
+  /** Sampling settings for a task on the active provider (only Ollama gets any). */
+  private settings(task: LlmTask) {
+    return taskCallSettings(this.config.provider, task);
+  }
+
+  /**
+   * Structured call with JSON repair, semantic validation and corrective retries
+   * (see structured.ts). Returns the same `{ object }` shape as generateObject.
+   */
+  private async object<S extends z.ZodType>(
+    task: LlmTask,
+    opts: {
+      schema: S;
+      schemaName?: string;
+      schemaDescription?: string;
+      system?: string;
+      prompt: string;
+      maxOutputTokens?: number;
+      abortSignal?: AbortSignal;
+      validate?: (value: z.infer<S>) => string[];
+    },
+  ): Promise<{ object: z.infer<S> }> {
+    const object = await generateValidated({
+      model: this.model,
+      ...opts,
+      settings: this.settings(task),
+      schemaInPrompt: this.config.provider === "ollama",
+    });
+    return { object };
+  }
+
   // -------------------------------------------------------------------------
   // CV-Job Match Analysis
   // -------------------------------------------------------------------------
   async analyzeCvMatch(cv: ParsedCv, job: Job, abortSignal?: AbortSignal): Promise<MatchAnalysis> {
-    const result = await generateObject({
-      model: this.model,
+    const result = await this.object("extract", {
       schema: schemas.matchAnalysisSchema,
       schemaName: "MatchAnalysis",
       schemaDescription:
         "Structured match analysis between a candidate CV and a job description.",
-      prompt: prompts.buildMatchPrompt(cv, job),
+      ...prompts.buildMatchPrompt(cv, job),
       abortSignal,
     });
-    return result.object as MatchAnalysis;
+    return groundSkillMatches(result.object as MatchAnalysis, cv);
   }
 
   // -------------------------------------------------------------------------
@@ -116,13 +152,12 @@ export class LlmService {
     cv: ParsedCv,
     job?: Job
   ): Promise<NarrativeReport> {
-    const result = await generateObject({
-      model: this.model,
+    const result = await this.object("extract", {
       schema: schemas.narrativeReportSchema,
       schemaName: "NarrativeReport",
       schemaDescription:
         "Structured feedback report on the quality of a candidate CV.",
-      prompt: prompts.buildNarrativePrompt(cv, job),
+      ...prompts.buildNarrativePrompt(cv, job),
     });
     return result.object as NarrativeReport;
   }
@@ -134,6 +169,21 @@ export class LlmService {
     input: CvOptimizationInput,
     abortSignal?: AbortSignal,
   ): AsyncGenerator<CvStreamEvent> {
+    // Local models tailor section by section: code keeps the structure and each small
+    // rewrite is validated (see cv-tailor-sectioned.ts). Cloud models handle the
+    // whole CV in one pass well, which reads more coherently.
+    const sourceCv = input.sourceCv;
+    if (this.config.provider === "ollama" && canTailorBySection(sourceCv)) {
+      return streamSectionedTailoring(
+        { ...input, sourceCv },
+        {
+          generate: async (opts) => (await this.object("rewrite", opts)).object,
+          abortSignal,
+          onFallback: (what, problems) =>
+            console.warn(`[cvOptimization] ${what} kept the source text:`, problems),
+        },
+      );
+    }
     return this.streamCvEvents("cvOptimization", buildCvOptimizationPrompt(input), abortSignal);
   }
 
@@ -156,9 +206,10 @@ export class LlmService {
   ): AsyncGenerator<CvStreamEvent> {
     const result = streamText({
       model: this.model,
+      ...this.settings("rewrite"),
       system: pair.system,
       prompt: pair.prompt,
-      // Deliberately no `temperature`: reasoning models reject or ignore it.
+      // Only Ollama gets sampling settings: cloud reasoning models reject or ignore temperature.
       maxOutputTokens: CV_STREAM_MAX_OUTPUT_TOKENS,
       abortSignal,
     });
@@ -195,7 +246,8 @@ export class LlmService {
   ): AsyncGenerator<string> {
     const result = streamText({
       model: this.model,
-      prompt: prompts.buildCoverLetterPrompt(cv, job),
+      ...this.settings("rewrite"),
+      ...prompts.buildCoverLetterPrompt(cv, job),
     });
     for await (const chunk of result.textStream) {
       yield chunk;
@@ -216,10 +268,9 @@ export class LlmService {
     closing_paragraph: string;
     sign_off: string;
   }> {
-    const result = await generateObject({
-      model: this.model,
+    const result = await this.object("rewrite", {
       schema: schemas.coverLetterSchema,
-      prompt: prompts.buildCoverLetterPrompt(cv, job),
+      ...prompts.buildCoverLetterPrompt(cv, job),
     });
     return result.object;
   }
@@ -231,10 +282,9 @@ export class LlmService {
     cv: ParsedCv,
     variant: PitchVariant
   ): Promise<{ pitch: string; key_points: string[]; tips: string[] }> {
-    const result = await generateObject({
-      model: this.model,
+    const result = await this.object("rewrite", {
       schema: schemas.pitchSchema,
-      prompt: prompts.buildPitchPrompt(cv, variant),
+      ...prompts.buildPitchPrompt(cv, variant),
     });
     return result.object;
   }
@@ -253,10 +303,9 @@ export class LlmService {
       >
     >
   > {
-    const result = await generateObject({
-      model: this.model,
+    const result = await this.object("rewrite", {
       schema: schemas.starStorySchema,
-      prompt: prompts.buildStarStoriesPrompt(cv, experienceIndex),
+      ...prompts.buildStarStoriesPrompt(cv, experienceIndex),
     });
     return result.object.stories;
   }
@@ -271,10 +320,9 @@ export class LlmService {
     strengths: StrengthEntry[];
     weaknesses: WeaknessEntry[];
   }> {
-    const result = await generateObject({
-      model: this.model,
+    const result = await this.object("rewrite", {
       schema: schemas.strengthsWeaknessesSchema,
-      prompt: prompts.buildStrengthsWeaknessesPrompt(cv, job),
+      ...prompts.buildStrengthsWeaknessesPrompt(cv, job),
     });
     return result.object;
   }
@@ -289,8 +337,7 @@ export class LlmService {
   ): Promise<
     Array<{ category: string; question: string; rationale: string }>
   > {
-    const result = await generateObject({
-      model: this.model,
+    const result = await this.object("rewrite", {
       schema: schemas.companyQuestionsSchema,
       prompt: prompts.buildCompanyQuestionsPrompt(
         companyName,
@@ -317,8 +364,7 @@ export class LlmService {
     talking_points: string[];
     questions_to_ask: string[];
   }> {
-    const result = await generateObject({
-      model: this.model,
+    const result = await this.object("rewrite", {
       schema: schemas.companyBriefSchema,
       prompt: prompts.buildCompanyBriefPrompt(companyName, reviews, job),
     });
@@ -335,6 +381,7 @@ export class LlmService {
   ): AsyncGenerator<string> {
     const result = streamText({
       model: this.model,
+      ...this.settings("rewrite"),
       prompt: prompts.buildCompanyBriefPrompt(companyName, reviews, job),
     });
     for await (const chunk of result.textStream) {
@@ -363,8 +410,7 @@ export class LlmService {
     }>;
     day_of_tips: string[];
   }> {
-    const result = await generateObject({
-      model: this.model,
+    const result = await this.object("rewrite", {
       schema: schemas.studyMaterialSchema,
       prompt: prompts.buildStudyMaterialPrompt(companyName, role, reviews),
     });
@@ -381,6 +427,7 @@ export class LlmService {
   ): AsyncGenerator<string> {
     const result = streamText({
       model: this.model,
+      ...this.settings("rewrite"),
       prompt: prompts.buildStudyMaterialPrompt(companyName, role, reviews),
     });
     for await (const chunk of result.textStream) {
@@ -393,14 +440,25 @@ export class LlmService {
   // -------------------------------------------------------------------------
   async refineCvParsing(
     rawText: string,
-    heuristicResult: ParsedCv
+    heuristicResult: ParsedCv,
+    options: {
+      layout?: CvLayoutLine[] | null;
+      onProgress?: (progress: CvParseProgress) => void;
+      abortSignal?: AbortSignal;
+    } = {},
   ): Promise<ParsedCv> {
-    const result = await generateObject({
-      model: this.model,
-      schema: schemas.cvRefinementSchema,
-      prompt: prompts.buildCvRefinementPrompt(rawText, heuristicResult),
-    });
-    return result.object as ParsedCv;
+    const { parsed, warnings } = await parseCvWithLlm(
+      { rawText, layout: options.layout, heuristic: heuristicResult },
+      {
+        generate: async (opts) => (await this.object("extract", opts)).object,
+        // One local GPU serves one request at a time; cloud APIs handle a few in parallel.
+        concurrency: this.config.provider === "ollama" ? 1 : 4,
+        onProgress: options.onProgress,
+        abortSignal: options.abortSignal,
+      },
+    );
+    if (warnings.length > 0) console.warn("[refineCvParsing]", warnings);
+    return parsed;
   }
 
   // -------------------------------------------------------------------------
@@ -412,15 +470,12 @@ export class LlmService {
     history: prompts.CvChatTurn[],
     userMessage: string,
   ): Promise<ParsedCv> {
-    const result = await generateObject({
-      model: this.model,
+    const pair = prompts.buildCvParsingChatRefinementPrompt(rawText, current, history, userMessage);
+    const result = await this.object("extract", {
       schema: schemas.cvRefinementSchema,
-      prompt: prompts.buildCvParsingChatRefinementPrompt(
-        rawText,
-        current,
-        history,
-        userMessage,
-      ),
+      schemaName: "ParsedCv",
+      system: pair.system,
+      prompt: pair.prompt,
     });
     return result.object as ParsedCv;
   }
@@ -433,10 +488,10 @@ export class LlmService {
     schemaName: string,
     pair: PromptPair,
     abortSignal?: AbortSignal,
+    task: LlmTask = "rewrite",
   ): Promise<z.infer<S>> {
     try {
-      const result = await generateObject({
-        model: this.model,
+      const result = await this.object(task, {
         schema,
         schemaName,
         system: pair.system,
@@ -463,7 +518,7 @@ export class LlmService {
   }
 
   mockTurn(input: MockTurnInput, abortSignal?: AbortSignal): Promise<MockTurnResult> {
-    return this.structured(mockTurnSchema, "MockInterviewTurn", buildMockTurnPrompt(input), abortSignal);
+    return this.structured(mockTurnSchema, "MockInterviewTurn", buildMockTurnPrompt(input), abortSignal, "chat");
   }
 
   mockReport(
@@ -485,8 +540,7 @@ export class LlmService {
   // Pasted job post → structured fields
   // -------------------------------------------------------------------------
   async extractJobPosting(text: string, abortSignal?: AbortSignal): Promise<PastedJobExtraction> {
-    const result = await generateObject({
-      model: this.model,
+    const result = await this.object("extract", {
       schema: pastedJobExtractionSchema,
       schemaName: "JobPosting",
       schemaDescription: "Structured fields extracted from a pasted job post.",
@@ -513,6 +567,7 @@ export class LlmService {
   async *streamText(prompt: string): AsyncGenerator<string> {
     const result = streamText({
       model: this.model,
+      ...this.settings("rewrite"),
       prompt,
     });
     for await (const chunk of result.textStream) {
@@ -534,8 +589,7 @@ export class LlmService {
       reason: string;
     }>
   > {
-    const result = await generateObject({
-      model: this.model,
+    const result = await this.object("extract", {
       schema: schemas.drEligibilitySchema,
       schemaName: "DrEligibility",
       schemaDescription: "Per-job DR/LATAM work-eligibility classification.",

@@ -8,7 +8,7 @@ esbuild
     target: "node20",
     outfile: "dist/index.cjs",
     format: "cjs",
-    external: ["playwright", "pdf-parse", "mammoth"], // External: native deps and packages with complex bundling needs
+    external: ["playwright", "pdf-parse", "pdfjs-dist", "mammoth"], // External: native deps and packages with complex bundling needs
     sourcemap: true,
     minify: false,
     treeShaking: true,

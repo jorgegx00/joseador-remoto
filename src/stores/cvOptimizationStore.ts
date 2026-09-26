@@ -506,6 +506,7 @@ export const useCvOptimizationStore = create<CvOptimizationState>()(
                 .map(({ skill, importance }) => ({ skill, importance })),
               skillsToAvoid: s.skillCandidates.filter((c) => !c.selected).map((c) => c.skill),
               experienceYears: computeExperienceYears(ctx.cv.parsed_data),
+              sourceCv: ctx.cv.parsed_data,
             };
 
             let content = "";

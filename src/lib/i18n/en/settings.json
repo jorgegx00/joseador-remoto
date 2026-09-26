@@ -97,7 +97,7 @@
       "model_not_installed": "\"{{model}}\" is not installed on this server. Run: ollama pull {{model}}",
       "num_ctx": "Context window",
       "num_ctx_tokens": "{{formatted}} tokens",
-      "num_ctx_hint": "How much text the model can read at once. CVs + job posts need 16k or more; larger values use more RAM/VRAM.",
+      "num_ctx_hint": "Maximum text the model can read at once. Each request uses only what it needs, up to this limit. CVs + job posts need 16k or more; larger values use more RAM/VRAM.",
       "no_address": "Enter the server address first.",
       "models_found_one": "{{count}} model available",
       "models_found_other": "{{count}} models available",

@@ -48,6 +48,7 @@ async function handleCommand(command: ScrapeCommand): Promise<void> {
           data: {
             cv_id: cvId,
             text: result.rawText,
+            lines: result.lines,
             parsed: result.parsed,
             pageCount: result.pageCount,
             metadata: result.metadata,

@@ -81,6 +81,8 @@
     "dialog_description": "La IA revisara el texto original del CV y propondra correcciones a los campos extraidos.",
     "refining": "La IA esta revisando tu CV...",
     "refining_hint": "Esto puede tardar un momento dependiendo de tu proveedor de IA.",
+    "progress_segmenting": "Buscando las secciones de tu CV…",
+    "progress_entries": "Leyendo entrada {{done}} de {{total}}…",
     "accept_changes": "Aceptar cambios",
     "discard_changes": "Descartar",
     "error_title": "Error al refinar",

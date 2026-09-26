@@ -97,7 +97,7 @@
       "model_not_installed": "\"{{model}}\" no esta instalado en este servidor. Ejecuta: ollama pull {{model}}",
       "num_ctx": "Ventana de contexto",
       "num_ctx_tokens": "{{formatted}} tokens",
-      "num_ctx_hint": "Cuanto texto puede leer el modelo a la vez. CV + oferta de empleo necesitan 16k o mas; valores mayores usan mas RAM/VRAM.",
+      "num_ctx_hint": "Maximo de texto que el modelo puede leer a la vez. Cada solicitud usa solo lo necesario, hasta este limite. CV + oferta de empleo necesitan 16k o mas; valores mayores usan mas RAM/VRAM.",
       "no_address": "Primero introduce la direccion del servidor.",
       "models_found_one": "{{count}} modelo disponible",
       "models_found_other": "{{count}} modelos disponibles",

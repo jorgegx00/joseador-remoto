@@ -3,7 +3,8 @@ import { useCvStore } from "@/stores/cvStore";
 import { useCvRefine } from "@/features/cv/hooks/useCvRefine";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { cvService } from "@/services/cv";
-import type { ParsedCv } from "@/types";
+import type { CvLayoutLine, ParsedCv } from "@/types";
+import type { CvParseProgress } from "@/lib/cv/llm-parse";
 
 type UploadStep =
   | "idle"
@@ -19,6 +20,7 @@ interface PendingRefinement {
   cvId: string;
   rawText: string;
   heuristic: ParsedCv;
+  layout: CvLayoutLine[] | null;
 }
 
 interface UseCvUploadResult {
@@ -29,6 +31,8 @@ interface UseCvUploadResult {
   error: string | null;
   pendingRefinement: PendingRefinement | null;
   refinementFailed: boolean;
+  /** Progress of the AI parse while step is "refining". */
+  parseProgress: CvParseProgress | null;
   confirmEnhanced: () => void;
   skipEnhanced: () => void;
   reset: () => void;
@@ -36,7 +40,7 @@ interface UseCvUploadResult {
 
 export function useCvUpload(): UseCvUploadResult {
   const { uploadCv, parseCv, updateCvData } = useCvStore();
-  const { refine } = useCvRefine();
+  const { refine, parseProgress } = useCvRefine();
   const [step, setStep] = useState<UploadStep>("idle");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -103,6 +107,7 @@ export function useCvUpload(): UseCvUploadResult {
         cvId,
         rawText: fresh.raw_text,
         heuristic: fresh.parsed_data,
+        layout: fresh.layout_lines,
       };
       setPendingRefinement(pending);
       setStep("awaiting_enhanced_choice");
@@ -123,7 +128,7 @@ export function useCvUpload(): UseCvUploadResult {
       setStep("refining");
       setProgress(85);
       try {
-        const refined = await refine(pending.rawText, pending.heuristic);
+        const refined = await refine(pending.rawText, pending.heuristic, pending.layout);
         if (refined) {
           // why: if LLM returns null we keep the heuristic parse rather than wiping user-visible data.
           await updateCvData(cvId, refined);
@@ -165,6 +170,7 @@ export function useCvUpload(): UseCvUploadResult {
     error,
     pendingRefinement,
     refinementFailed,
+    parseProgress,
     confirmEnhanced,
     skipEnhanced,
     reset,

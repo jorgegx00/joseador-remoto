@@ -1,0 +1,502 @@
+[
+ {
+  "text": "Daniela Ortiz Vega",
+  "page": 1,
+  "size": 1.55,
+  "indent": 0,
+  "centered": false,
+  "gap": 0,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "(555) 010-0142 | daniela@example.com | Austin, TX",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1.6,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Summary",
+  "page": 1,
+  "size": 1.15,
+  "indent": 0,
+  "centered": false,
+  "gap": 2.1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Seasoned Backend Engineer with over 12 years of experience building distributed systems and cloud-native services. Specialized in Java, Spring Boot, and AWS. Track record of delivering reliable backend platforms across logistics, retail, and insurance.",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 2.1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Extensive experience with event-driven architectures, payment integrations, and high-volume data processing.",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1.8,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Experience",
+  "page": 1,
+  "size": 1.15,
+  "indent": 0,
+  "centered": false,
+  "gap": 2.1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Northwind Logistics | Remote",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 2.1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Senior Software Engineer | 08/2024 - Present",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Design and maintain low-latency routing services for real-time shipment tracking.",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1.2,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Develop resilient microservices using Java 21, Spring Boot, Kotlin, and Python.",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Engineer cloud infrastructure on AWS, using DynamoDB for fast, durable storage of shipment events and delivery data.",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Ensure reliability and performance of services that support time-critical delivery operations.",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Bluefin Retail | Remote",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1.7,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Java Backend Developer | 07/2022 - 08/2024",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Led development of pricing and promotions services using Kotlin and Spring Boot microservices.",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1.2,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Integrated services with AWS and Azure, including Lambda, Step Functions, and serverless workflows.",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Built product recommendation features with Azure AI services.",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Designed efficient database schemas using PostgreSQL.",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Delivered cloud-native services in Scala and Java on AWS for an online marketplace, processing order events in real time.",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Developed data streaming pipelines using Kafka to move inventory updates between services.",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Deployed microservices on Kubernetes clusters with autoscaling and CI/CD integration.",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Currently delivering checkout services for a large grocery customer",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Harbor Mutual Insurance | Remote",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1.7,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Backend Software Engineer Associate | 08/2021 - 06/2022",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Maintained and extended policy management apps with Spring Boot and Spring Security.",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1.2,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Connected Angular frontends to secure REST APIs.",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Improved Angular-based internal tools used by claims adjusters.",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Supported legacy claims systems written in COBOL on IBM mainframes for nightly batch processing.",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Delivered multi-state solutions that met insurance compliance requirements.",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Diario del Norte | Monterrey, Mexico",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1.7,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Programmer Analyst & Lead | 01/2016 - 07/2021",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Led a development team building newsroom tools with Java EE, Oracle PL/SQL, and MS SQL Server.",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1.2,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Modernized publishing systems through REST integrations and mobile apps built with Xamarin.",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Managed AWS infrastructure for hosting and scaling the news site.",
+  "page": 1,
+  "size": 1,
+  "indent": 1,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Diario del Norte | Monterrey, Mexico",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1.7,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Junior Programmer | 11/2014 - 12/2015",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Built and integrated Oracle Forms applications with Java EE services.",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Instituto Tecnológico Regional | Monterrey, Mexico",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1.7,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Junior Programmer | 04/2014 - 11/2014",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Migrated legacy ASP apps to ASP.NET (MVC/WebForms) using VB.NET.",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Quartz Labs | Monterrey, Mexico",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1.7,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Junior Programmer | 02/2013 - 03/2014",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Developed desktop inventory apps using .NET and SQL Server.",
+  "page": 1,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Skills",
+  "page": 2,
+  "size": 1.15,
+  "indent": 0,
+  "centered": false,
+  "gap": 0,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Java, Kotlin, Scala, Python, C#, C/C++, JavaScript, Spring Boot, Hibernate, Xamarin, Angular, PostgreSQL, Oracle, PL/SQL, MySQL, SQL Server, AWS, Lambda, Step Functions, DynamoDB, Kubernetes, Azure, Kafka, Git",
+  "page": 2,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Education",
+  "page": 2,
+  "size": 1.15,
+  "indent": 0,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Colegio Técnico San Marcos | Monterrey, Mexico",
+  "page": 2,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Technician in Computer Systems",
+  "page": 2,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 0.5,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "Languages",
+  "page": 2,
+  "size": 1.15,
+  "indent": 0,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ },
+ {
+  "text": "English, Spanish, Portuguese, Italian",
+  "page": 2,
+  "size": 1,
+  "indent": 0,
+  "centered": false,
+  "gap": 1,
+  "bold": false,
+  "bullet": false
+ }
+]

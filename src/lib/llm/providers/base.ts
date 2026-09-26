@@ -6,7 +6,7 @@ export interface LlmProviderConfig {
   model: string;
   apiKey?: string;
   baseUrl?: string;
-  /** Ollama only: context window (num_ctx) sent with every request. */
+  /** Ollama only: upper bound for num_ctx; each request is sized to its prompt up to this. */
   numCtx?: number;
 }
 

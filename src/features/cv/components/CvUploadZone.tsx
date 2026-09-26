@@ -42,6 +42,7 @@ export const CvUploadZone = forwardRef<CvUploadZoneHandle, CvUploadZoneProps>(fu
     progress,
     pendingRefinement,
     refinementFailed,
+    parseProgress,
     confirmEnhanced,
     skipEnhanced,
   } = useCvUpload();
@@ -143,7 +144,11 @@ export const CvUploadZone = forwardRef<CvUploadZoneHandle, CvUploadZoneProps>(fu
                 />
                 {(step === "refining" || pendingRefinement !== null) && (
                   <StepIndicator
-                    label={t("upload_steps.refining")}
+                    label={
+                      step === "refining" && parseProgress?.step === "entries"
+                        ? `${t("upload_steps.refining")} · ${t("refine.progress_entries", { done: parseProgress.done, total: parseProgress.total })}`
+                        : t("upload_steps.refining")
+                    }
                     status={step === "refining" ? "active" : "pending"}
                   />
                 )}

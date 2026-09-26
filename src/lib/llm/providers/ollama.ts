@@ -1,8 +1,9 @@
 import { createOllama } from "ollama-ai-provider-v2";
-import { defaultSettingsMiddleware, wrapLanguageModel } from "ai";
+import { wrapLanguageModel } from "ai";
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import type { LlmProviderInfo } from "./base";
 import { OLLAMA_DEFAULT_NUM_CTX } from "./ollama-url";
+import { ollamaParamsMiddleware } from "./ollama-params";
 
 export * from "./ollama-url";
 
@@ -31,16 +32,12 @@ export function createOllamaModel({ baseUrl, model, apiKey, numCtx }: OllamaMode
     fetch: ollamaFetch,
   });
   // Ollama's default context window is small and silently truncates long prompts
-  // (a CV + job description easily exceeds it), so every call sets num_ctx.
+  // (a CV + job description easily exceeds it), so every call sizes num_ctx up to
+  // the user's limit, and sampling settings are moved into `options` where
+  // /api/chat reads them (see ollama-params.ts).
   return wrapLanguageModel({
     model: provider(model),
-    middleware: defaultSettingsMiddleware({
-      settings: {
-        providerOptions: {
-          ollama: { options: { num_ctx: numCtx ?? OLLAMA_DEFAULT_NUM_CTX } },
-        },
-      },
-    }),
+    middleware: ollamaParamsMiddleware(numCtx ?? OLLAMA_DEFAULT_NUM_CTX),
   });
 }
 

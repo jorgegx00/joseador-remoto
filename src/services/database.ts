@@ -7,7 +7,7 @@ import { jobMatchesTagFilters } from "@/features/jobs/utils/jobTaxonomy";
 import { emitPrepDocumentChanged } from "./prep-events";
 import type { Job, JobSource, Company, CvRecord, NewCvRecord, ParsedCv, Application, ApplicationEvent, Interview, AtsReport, GeneratedCv, ScrapeRun, CoverLetter } from "@/types";
 import type { StarStory, InterviewPrep, GlassdoorInterviewReview, MatchAnalysisRecord, MatchAnalysis } from "@/types";
-import type { MockSession, PrepDocument, PrepDocumentKind } from "@/types";
+import type { MockSession, PrepDocument, PrepDocumentKind, CvLayoutLine } from "@/types";
 
 // --------------------------------------------------------------------------
 // Drizzle sqlite-proxy bridge
@@ -406,6 +406,8 @@ export async function runMigrations(): Promise<void> {
     { sql: `ALTER TABLE cvs ADD COLUMN target_job_title TEXT` },
     { sql: `ALTER TABLE cvs ADD COLUMN target_company TEXT` },
     { sql: `ALTER TABLE cvs ADD COLUMN generated_cv_id TEXT` },
+    // Layout lines (font size, indentation, bullets) of uploaded CVs, for the LLM parser.
+    { sql: `ALTER TABLE cvs ADD COLUMN layout_lines TEXT` },
     // Content fingerprints so a cached match analysis can be flagged stale when the
     // CV or job text changed after it was computed.
     { sql: `ALTER TABLE match_analyses ADD COLUMN cv_fingerprint TEXT` },
@@ -863,6 +865,7 @@ export async function insertCv(cv: NewCvRecord): Promise<void> {
     file_type: cv.file_type,
     raw_text: cv.raw_text,
     parsed_data: JSON.stringify(cv.parsed_data),
+    layout_lines: cv.layout_lines ? JSON.stringify(cv.layout_lines) : null,
     is_primary: cv.is_primary,
     source: cv.source ?? "upload",
     parent_cv_id: cv.parent_cv_id ?? null,
@@ -918,16 +921,30 @@ export async function getTailoredCvsByParent(parentCvId: string): Promise<CvReco
   return rows.map(mapCv);
 }
 
-export async function updateCvParsedData(id: string, rawText: string, parsedData: import("@/types").ParsedCv): Promise<void> {
-  const now = Date.now();
-  await db
-    .update(schema.cvs)
-    .set({
-      raw_text: rawText,
-      parsed_data: JSON.stringify(parsedData),
-      updated_at: now,
-    })
-    .where(eq(schema.cvs.id, id));
+/** `layoutLines` is only written when given, so edits keep the upload's layout. */
+export async function updateCvParsedData(
+  id: string,
+  rawText: string,
+  parsedData: import("@/types").ParsedCv,
+  layoutLines?: CvLayoutLine[] | null,
+): Promise<void> {
+  const set: Partial<typeof schema.cvs.$inferInsert> = {
+    raw_text: rawText,
+    parsed_data: JSON.stringify(parsedData),
+    updated_at: Date.now(),
+  };
+  if (layoutLines !== undefined) set.layout_lines = layoutLines ? JSON.stringify(layoutLines) : null;
+  await db.update(schema.cvs).set(set).where(eq(schema.cvs.id, id));
+}
+
+function parseLayoutLines(json: string | null): CvLayoutLine[] | null {
+  if (!json) return null;
+  try {
+    const lines = JSON.parse(json) as unknown;
+    return Array.isArray(lines) && lines.length > 0 ? (lines as CvLayoutLine[]) : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function setCvPrimary(id: string): Promise<void> {
@@ -996,6 +1013,7 @@ function mapCv(row: typeof schema.cvs.$inferSelect): CvRecord {
     file_type: row.file_type as CvRecord["file_type"],
     raw_text: row.raw_text ?? "",
     parsed_data: parsedData,
+    layout_lines: parseLayoutLines(row.layout_lines),
     is_primary: row.is_primary ?? false,
     source: row.source === "tailored" ? "tailored" : "upload",
     parent_cv_id: row.parent_cv_id ?? null,

@@ -848,6 +848,7 @@ export function CvDetailPage() {
         cvId={cvId}
         rawText={cv.raw_text}
         current={cv.parsed_data}
+        layoutLines={cv.layout_lines}
         onAccepted={() => {
           void refetch();
         }}

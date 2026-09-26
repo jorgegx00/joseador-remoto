@@ -35,10 +35,11 @@ const PLACEHOLDER_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
 
 /**
  * Returns the label of the first placeholder pattern found, or null if the content is clean.
- * Skips checking until at least 100 chars have streamed (avoids false positives on partial markers).
+ * Skips checking until `minLength` chars have streamed (avoids false positives on partial markers);
+ * pass 0 to check a complete short text.
  */
-export function findPlaceholderViolation(content: string): string | null {
-  if (content.length < 100) return null;
+export function findPlaceholderViolation(content: string, minLength = 100): string | null {
+  if (content.length < minLength) return null;
   for (const { pattern, label } of PLACEHOLDER_PATTERNS) {
     if (pattern.test(content)) return label;
   }

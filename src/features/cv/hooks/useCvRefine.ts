@@ -2,17 +2,20 @@ import { useState, useCallback } from "react";
 import { LlmService } from "@/lib/llm/service";
 import { getConfig } from "@/services/llm";
 import { useSettingsStore } from "@/stores/settingsStore";
-import type { ParsedCv } from "@/types";
+import type { CvLayoutLine, ParsedCv } from "@/types";
 import type { CvChatTurn } from "@/lib/llm/prompts";
+import type { CvParseProgress } from "@/lib/cv/llm-parse";
 
 interface UseCvRefineResult {
   proposed: ParsedCv | null;
   isRefining: boolean;
+  /** Progress of the running AI parse (sections, then entries). */
+  parseProgress: CvParseProgress | null;
   isChatting: boolean;
   chatHistory: CvChatTurn[];
   error: string | null;
   chatError: string | null;
-  refine: (rawText: string, current: ParsedCv) => Promise<ParsedCv | null>;
+  refine: (rawText: string, current: ParsedCv, layout?: CvLayoutLine[] | null) => Promise<ParsedCv | null>;
   refineWithChat: (rawText: string, userMessage: string) => Promise<void>;
   setProposedManually: (cv: ParsedCv) => void;
   clearChat: () => void;
@@ -22,13 +25,14 @@ interface UseCvRefineResult {
 export function useCvRefine(): UseCvRefineResult {
   const [proposed, setProposed] = useState<ParsedCv | null>(null);
   const [isRefining, setIsRefining] = useState(false);
+  const [parseProgress, setParseProgress] = useState<CvParseProgress | null>(null);
   const [isChatting, setIsChatting] = useState(false);
   const [chatHistory, setChatHistory] = useState<CvChatTurn[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [chatError, setChatError] = useState<string | null>(null);
 
   const refine = useCallback(
-    async (rawText: string, current: ParsedCv): Promise<ParsedCv | null> => {
+    async (rawText: string, current: ParsedCv, layout?: CvLayoutLine[] | null): Promise<ParsedCv | null> => {
       setError(null);
       setIsRefining(true);
       setProposed(null);
@@ -40,7 +44,10 @@ export function useCvRefine(): UseCvRefineResult {
         }
         const config = await getConfig(activeProvider);
         const service = new LlmService(config);
-        const refined = await service.refineCvParsing(rawText, current);
+        const refined = await service.refineCvParsing(rawText, current, {
+          layout,
+          onProgress: setParseProgress,
+        });
         setProposed(refined);
         return refined;
       } catch (err) {
@@ -48,6 +55,7 @@ export function useCvRefine(): UseCvRefineResult {
         return null;
       } finally {
         setIsRefining(false);
+        setParseProgress(null);
       }
     },
     [],
@@ -110,6 +118,7 @@ export function useCvRefine(): UseCvRefineResult {
   return {
     proposed,
     isRefining,
+    parseProgress,
     isChatting,
     chatHistory,
     error,

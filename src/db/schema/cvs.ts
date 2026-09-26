@@ -9,6 +9,7 @@ export const cvs = sqliteTable(
     file_type: text("file_type").notNull(), // pdf | docx | md (tailored CVs)
     raw_text: text("raw_text"),
     parsed_data: text("parsed_data"), // JSON stored as text
+    layout_lines: text("layout_lines"), // JSON CvLayoutLine[] from the sidecar (uploads only)
     is_primary: integer("is_primary", { mode: "boolean" }).default(false),
     source: text("source").notNull().default("upload"), // upload | tailored
     // Provenance of tailored CVs. Plain text on purpose (no FK): tailored CVs outlive

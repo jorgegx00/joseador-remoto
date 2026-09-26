@@ -5,7 +5,7 @@ export interface LlmConfig {
   model: string;
   apiKey?: string;
   baseUrl?: string;
-  /** Ollama only: context window (num_ctx) sent with every request. */
+  /** Ollama only: upper bound for num_ctx; each request is sized to its prompt up to this. */
   numCtx?: number;
 }
 
@@ -26,6 +26,8 @@ export interface MatchAnalysis {
     skill: string;
     found: boolean;
     importance: "critical" | "important" | "nice_to_have";
+    /** Quote from the CV backing `found` (absent on analyses saved before it existed). */
+    evidence?: string;
   }>;
   experience_match: number;
   seniority_fit: "under_qualified" | "good_fit" | "over_qualified";

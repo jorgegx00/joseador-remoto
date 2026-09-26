@@ -5,7 +5,15 @@ import {
   formatJobForCvPrompt,
   type CvOptimizationInput,
 } from "@/lib/llm/cv-optimization-prompts";
-import { buildMatchPrompt } from "@/lib/llm/prompts";
+import {
+  buildCoverLetterPrompt,
+  buildMatchPrompt,
+  buildNarrativePrompt,
+  buildPitchPrompt,
+  buildStarStoriesPrompt,
+  buildStrengthsWeaknessesPrompt,
+} from "@/lib/llm/prompts";
+import { groundSkillMatches } from "@/lib/llm/match-grounding";
 import { sampleParsedCv } from "../fixtures/sample-cv";
 import type { Job } from "@/types";
 
@@ -123,9 +131,57 @@ describe("buildCvOptimizationChatPrompt", () => {
 
 describe("formatJobForPrompt (shared)", () => {
   it("includes the company in match prompts", () => {
-    expect(buildMatchPrompt(sampleParsedCv, job)).toContain("Company: TechCorp");
-    expect(buildMatchPrompt(sampleParsedCv, { ...job, company_name: "Unknown company" })).not.toContain(
+    expect(buildMatchPrompt(sampleParsedCv, job).prompt).toContain("Company: TechCorp");
+    expect(buildMatchPrompt(sampleParsedCv, { ...job, company_name: "Unknown company" }).prompt).not.toContain(
       "Company: Unknown company",
     );
+  });
+});
+
+describe("legacy builders as system/prompt pairs", () => {
+  it("put rules in the system message, data first and the task last", () => {
+    for (const pair of [
+      buildMatchPrompt(sampleParsedCv, job),
+      buildNarrativePrompt(sampleParsedCv, job),
+      buildCoverLetterPrompt(sampleParsedCv, job),
+      buildPitchPrompt(sampleParsedCv, "formal"),
+      buildStarStoriesPrompt(sampleParsedCv, 0),
+      buildStrengthsWeaknessesPrompt(sampleParsedCv, job),
+    ]) {
+      expect(pair.system).toMatch(/Rules:/);
+      expect(pair.system).not.toContain(sampleParsedCv.experience[0].company);
+      expect(pair.prompt.startsWith("<cv>")).toBe(true);
+      expect(pair.prompt.trim().split("\n").at(-1)).not.toMatch(/^<\//);
+    }
+  });
+
+  it("never asks for estimated numbers or placeholders", () => {
+    const star = buildStarStoriesPrompt(sampleParsedCv, 0);
+    expect(star.system).not.toMatch(/realistic estimates/i);
+    expect(star.system).toMatch(/never estimate numbers/);
+    const letter = buildCoverLetterPrompt(sampleParsedCv, job);
+    expect(letter.system).not.toMatch(/Dear Hiring Team at \[Company\]/);
+    expect(letter.system).toContain("Dear TechCorp Hiring Team,");
+  });
+});
+
+describe("groundSkillMatches", () => {
+  const analysis = {
+    overall_match: 70,
+    experience_match: 70,
+    seniority_fit: "good_fit" as const,
+    gaps: [],
+    strengths: [],
+    recommendation: "",
+    skills_match: [
+      { skill: "Kubernetes", found: true, importance: "critical" as const, evidence: "ran Kubernetes clusters" },
+      { skill: sampleParsedCv.skills.technical[0], found: false, importance: "important" as const, evidence: "" },
+    ],
+  };
+
+  it("drops unsupported claims and restores literal matches", () => {
+    const grounded = groundSkillMatches(analysis, sampleParsedCv);
+    expect(grounded.skills_match[0]).toMatchObject({ found: false, evidence: "" });
+    expect(grounded.skills_match[1]).toMatchObject({ found: true });
   });
 });

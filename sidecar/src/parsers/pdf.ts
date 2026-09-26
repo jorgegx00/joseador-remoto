@@ -5,9 +5,14 @@
 
 import { PDFParse } from "pdf-parse";
 import fs from "fs/promises";
+import type { CvLine } from "../types.js";
+import { renderCvLines } from "./layout.js";
+import { extractPdfLines } from "./pdf-layout.js";
 
 export interface PdfParseResult {
   rawText: string;
+  /** Layout-aware lines; empty when positioned extraction failed (rawText then comes from pdf-parse). */
+  lines: CvLine[];
   pageCount: number;
   metadata: Record<string, string>;
 }
@@ -35,6 +40,9 @@ export async function parsePdf(filePath: string): Promise<PdfParseResult> {
   if (!header.startsWith("%PDF")) {
     throw new Error(`File does not appear to be a valid PDF: ${filePath}`);
   }
+
+  // pdfjs detaches the buffer it is given, so each parser gets its own copy.
+  const layoutData = Uint8Array.from(fileBuffer);
 
   // Convert Buffer to Uint8Array for pdf-parse v2
   const data = new Uint8Array(fileBuffer.buffer, fileBuffer.byteOffset, fileBuffer.byteLength);
@@ -72,7 +80,17 @@ export async function parsePdf(filePath: string): Promise<PdfParseResult> {
     process.stderr.write(`[pdf-parser] Warning: Could not extract metadata from: ${filePath}\n`);
   }
 
-  const rawText = textResult.text ?? "";
+  // Layout-aware extraction fixes reading order (e.g. headers drawn last) and merges
+  // wrapped lines; pdf-parse's flat text stays as the fallback.
+  let lines: CvLine[] = [];
+  try {
+    lines = await extractPdfLines(layoutData);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    process.stderr.write(`[pdf-parser] Warning: layout extraction failed, using plain text: ${msg}\n`);
+  }
+
+  const rawText = lines.length > 0 ? renderCvLines(lines) : (textResult.text ?? "");
   const pageCount = textResult.total ?? 0;
 
   if (rawText.trim().length === 0) {
@@ -90,6 +108,7 @@ export async function parsePdf(filePath: string): Promise<PdfParseResult> {
 
   return {
     rawText,
+    lines,
     pageCount,
     metadata,
   };

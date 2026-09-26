@@ -24,6 +24,11 @@ export const matchAnalysisSchema = z.object({
           .describe(
             "Whether the candidate has this skill based on their CV"
           ),
+        evidence: z
+          .string()
+          .describe(
+            'Shortest exact quote from the CV that shows the skill (e.g. "Spring Boot"), or "" when not found'
+          ),
         importance: z
           .enum(["critical", "important", "nice_to_have"])
           .describe(
@@ -484,13 +489,11 @@ export const cvRefinementSchema = z.object({
         title: z.string().describe("Job title"),
         start_date: z
           .string()
-          .describe("Start date in YYYY-MM format"),
+          .describe("Start date as written in the CV (e.g. \"08/2024\", \"January 2021\")"),
         end_date: z
           .string()
           .nullable()
-          .describe(
-            "End date in YYYY-MM format, or null if current position"
-          ),
+          .describe("End date as written in the CV, or null if current position"),
         description: z
           .string()
           .describe("Brief description of the role"),
@@ -524,10 +527,10 @@ export const cvRefinementSchema = z.object({
           .describe("Field of study or major"),
         start_date: z
           .string()
-          .describe("Start date in YYYY-MM format"),
+          .describe("Start date as written in the CV, or empty string"),
         end_date: z
           .string()
-          .describe("End date in YYYY-MM format"),
+          .describe("End or graduation date as written in the CV, or empty string"),
         honors: z
           .array(z.string())
           .describe(

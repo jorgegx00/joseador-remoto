@@ -21,7 +21,7 @@ import { useCvStore } from "@/stores/cvStore";
 import { useLlmAvailability } from "@/features/llm/hooks/useLlmAvailability";
 import { CvChatPanel } from "@/features/llm/components/CvChatPanel";
 import { ParsedCvEditor } from "./ParsedCvEditor";
-import type { ParsedCv, CvExperience, CvEducation, CvProject, CvLanguage } from "@/types";
+import type { CvLayoutLine, ParsedCv, CvExperience, CvEducation, CvProject, CvLanguage } from "@/types";
 
 interface CvRefineDialogProps {
   open: boolean;
@@ -29,6 +29,8 @@ interface CvRefineDialogProps {
   cvId: string;
   rawText: string;
   current: ParsedCv;
+  /** Layout lines of the uploaded file, when available (better structure detection). */
+  layoutLines?: CvLayoutLine[] | null;
   onAccepted?: () => void;
 }
 
@@ -151,12 +153,14 @@ export function CvRefineDialog({
   cvId,
   rawText,
   current,
+  layoutLines,
   onAccepted,
 }: CvRefineDialogProps) {
   const { t } = useTranslation("cv");
   const {
     proposed,
     isRefining,
+    parseProgress,
     isChatting,
     chatHistory,
     error,
@@ -177,8 +181,8 @@ export function CvRefineDialog({
     }
     if (!hasLlmProvider) return;
     if (!rawText) return;
-    void refine(rawText, current);
-  }, [open, rawText, current, refine, reset, hasLlmProvider]);
+    void refine(rawText, current, layoutLines);
+  }, [open, rawText, current, layoutLines, refine, reset, hasLlmProvider]);
 
   const diffs = useMemo(
     () => (proposed ? computeDiffs(current, proposed) : []),
@@ -238,7 +242,13 @@ export function CvRefineDialog({
           <div className="py-10 flex flex-col items-center gap-3">
             <Loader2 className="h-8 w-8 text-primary animate-spin" />
             <p className="text-sm text-muted-foreground">{t("refine.refining")}</p>
-            <p className="text-xs text-muted-foreground">{t("refine.refining_hint")}</p>
+            <p className="text-xs text-muted-foreground">
+              {parseProgress?.step === "entries"
+                ? t("refine.progress_entries", { done: parseProgress.done, total: parseProgress.total })
+                : parseProgress?.step === "segmenting"
+                  ? t("refine.progress_segmenting")
+                  : t("refine.refining_hint")}
+            </p>
           </div>
         ) : error ? (
           <Alert variant="destructive">

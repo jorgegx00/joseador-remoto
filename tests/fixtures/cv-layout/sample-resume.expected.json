@@ -1,0 +1,75 @@
+{
+  "full_name": "Daniela Ortiz Vega",
+  "location": "Austin, TX",
+  "email": "daniela@example.com",
+  "experience": [
+    {
+      "title": "Senior Software Engineer",
+      "company": "Northwind Logistics",
+      "location": "Remote",
+      "start_date": "08/2024",
+      "end_date": null,
+      "bullets": 4
+    },
+    {
+      "title": "Java Backend Developer",
+      "company": "Bluefin Retail",
+      "location": "Remote",
+      "start_date": "07/2022",
+      "end_date": "08/2024",
+      "bullets": 8
+    },
+    {
+      "title": "Backend Software Engineer Associate",
+      "company": "Harbor Mutual Insurance",
+      "location": "Remote",
+      "start_date": "08/2021",
+      "end_date": "06/2022",
+      "bullets": 5
+    },
+    {
+      "title": "Programmer Analyst & Lead",
+      "company": "Diario del Norte",
+      "location": "Monterrey, Mexico",
+      "start_date": "01/2016",
+      "end_date": "07/2021",
+      "bullets": 3
+    },
+    {
+      "title": "Junior Programmer",
+      "company": "Diario del Norte",
+      "location": "Monterrey, Mexico",
+      "start_date": "11/2014",
+      "end_date": "12/2015",
+      "bullets": 1
+    },
+    {
+      "title": "Junior Programmer",
+      "company": "Instituto Tecnológico Regional",
+      "location": "Monterrey, Mexico",
+      "start_date": "04/2014",
+      "end_date": "11/2014",
+      "bullets": 1
+    },
+    {
+      "title": "Junior Programmer",
+      "company": "Quartz Labs",
+      "location": "Monterrey, Mexico",
+      "start_date": "02/2013",
+      "end_date": "03/2014",
+      "bullets": 1
+    }
+  ],
+  "education": [
+    {
+      "institution": "Colegio Técnico San Marcos",
+      "location": "Monterrey, Mexico"
+    }
+  ],
+  "languages": [
+    "English",
+    "Spanish",
+    "Portuguese",
+    "Italian"
+  ]
+}

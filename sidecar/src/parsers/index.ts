@@ -3,13 +3,15 @@
  * Handles PDF and DOCX files, extracting both raw text and structured CV data.
  */
 
-import type { ParsedCvResult } from "../types.js";
+import type { CvLine, ParsedCvResult } from "../types.js";
 import { parsePdf } from "./pdf.js";
 import { parseDocx } from "./docx.js";
 import { extractStructuredCv } from "./cv-extractor.js";
 
 export interface CvParseResult {
   rawText: string;
+  /** Layout-aware lines (PDF and DOCX); empty when unavailable. */
+  lines: CvLine[];
   parsed: ParsedCvResult;
   pageCount?: number;
   metadata: Record<string, string>;
@@ -27,6 +29,7 @@ export async function parseCvFile(
   fileType: "pdf" | "docx"
 ): Promise<CvParseResult> {
   let rawText: string;
+  let lines: CvLine[];
   let pageCount: number | undefined;
   let metadata: Record<string, string>;
 
@@ -36,6 +39,7 @@ export async function parseCvFile(
     case "pdf": {
       const pdfResult = await parsePdf(filePath);
       rawText = pdfResult.rawText;
+      lines = pdfResult.lines;
       pageCount = pdfResult.pageCount;
       metadata = pdfResult.metadata;
       break;
@@ -43,6 +47,7 @@ export async function parseCvFile(
     case "docx": {
       const docxResult = await parseDocx(filePath);
       rawText = docxResult.rawText;
+      lines = docxResult.lines;
       metadata = docxResult.metadata;
       break;
     }
@@ -55,7 +60,7 @@ export async function parseCvFile(
   }
 
   // Run the structured CV extraction on the raw text
-  const parsed = extractStructuredCv(rawText);
+  const parsed = extractStructuredCv(rawText, lines);
 
   process.stderr.write(
     `[parser] Extraction complete. Name: "${parsed.full_name}", ` +
@@ -66,6 +71,7 @@ export async function parseCvFile(
 
   return {
     rawText,
+    lines,
     parsed,
     pageCount,
     metadata,

@@ -71,6 +71,25 @@ export type CvSource = "upload" | "tailored";
 
 export type CvFileType = "pdf" | "docx" | "md";
 
+/**
+ * One logical line of an uploaded CV with its layout signals, produced by the
+ * sidecar (sidecar/src/parsers/layout.ts, `CvLine`). Wrapped lines are merged.
+ */
+export interface CvLayoutLine {
+  text: string;
+  page: number;
+  /** Font size relative to the body text (1 = body). */
+  size: number;
+  /** 0 = at the left edge, 1 = indented. */
+  indent: number;
+  centered: boolean;
+  /** Vertical gap before the line relative to normal spacing (1 = normal). */
+  gap: number;
+  bold: boolean;
+  /** Bullet or list item (glyph stripped from `text`). */
+  bullet: boolean;
+}
+
 export interface CvRecord {
   id: string;
   name: string;
@@ -79,6 +98,8 @@ export interface CvRecord {
   file_type: CvFileType;
   raw_text: string;
   parsed_data: ParsedCv;
+  /** Layout lines from the uploaded file; null for tailored CVs and older uploads. */
+  layout_lines: CvLayoutLine[] | null;
   is_primary: boolean;
   source: CvSource;
   /** Source CV a tailored CV was generated from. No FK: may dangle after deletes. */
@@ -103,10 +124,12 @@ export type NewCvRecord = Omit<
   | "target_job_title"
   | "target_company"
   | "generated_cv_id"
+  | "layout_lines"
 > &
   Partial<
     Pick<
       CvRecord,
+      | "layout_lines"
       | "source"
       | "parent_cv_id"
       | "target_job_id"
