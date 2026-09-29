@@ -458,7 +458,7 @@ function dateLine(body: string): string | null {
 
 const PRESENT_WORDS = new Set([
   "present", "current", "currently", "now", "today", "ongoing", "actualidad", "actual",
-  "actualmente", "presente", "hoy", "fecha",
+  "actualmente", "presente", "hoy", "fecha", "atual", "atualmente", "heute", "aktuell",
 ]);
 
 /**
@@ -492,7 +492,7 @@ const COMPANY_NOISE = new Set(["inc", "llc", "ltd", "sa", "srl", "corp", "co", "
 
 function companyTokens(heading: string): Set<string> {
   const norm = normalizeHeadingText(heading);
-  const parts = norm.split(/\s+(?:at|en|@|para|with|con)\s+|\s+@\s*/);
+  const parts = norm.split(/\s+(?:at|en|@|para|with|con|na|no|bei)\s+|\s+@\s*/);
   const company = parts.length > 1 ? parts[parts.length - 1] : norm;
   return new Set(
     company

@@ -20,13 +20,94 @@ import { mapRawJob } from "./map";
 import { ApifyLinkedInSource } from "./apify-linkedin-source";
 import { SerpApiSource } from "./serpapi-source";
 import { consoleLogger, type JobSourceAdapter } from "./types";
+import {
+  AdzunaSource,
+  AtsBoardsSource,
+  GetOnBoardSource,
+  HimalayasSource,
+  JobicySource,
+  JoobleSource,
+  RemotiveSource,
+  type FeedOptions,
+} from "./feed-sources";
+import { SOURCE_BY_ID, getFollowedBoards, isSourceEnabled, sourceServesMarkets, type SourceId } from "./sources";
+import { getMarketProfile } from "@/services/market-profile";
+import { countryName } from "@/lib/markets/countries";
+import { isRegionCode } from "@/lib/markets/regions";
 
-/** Thrown when neither SerpApi nor Apify has a key configured. */
+/**
+ * Google Jobs locale for the user's country. Countries Google Jobs indexes get
+ * their own gl/hl; everything else (including the DR, which has no index —
+ * see serpapi-source.ts) searches the US index in English.
+ */
+const SERP_LOCALES: Record<string, { gl: string; hl: string }> = {
+  US: { gl: "us", hl: "en" },
+  PR: { gl: "us", hl: "en" },
+  CA: { gl: "ca", hl: "en" },
+  GB: { gl: "uk", hl: "en" },
+  MX: { gl: "mx", hl: "es" },
+  CO: { gl: "co", hl: "es" },
+  CL: { gl: "cl", hl: "es" },
+  AR: { gl: "ar", hl: "es" },
+  ES: { gl: "es", hl: "es" },
+  BR: { gl: "br", hl: "pt" },
+  DE: { gl: "de", hl: "de" },
+};
+
+function serpLocale(country: string): { gl: string; hl: string } {
+  return SERP_LOCALES[country] ?? { gl: "us", hl: "en" };
+}
+
+/** Thrown when every job source is switched off (or lacks its key). */
 export class NoApiKeysError extends Error {
   constructor() {
-    super("no job source configured: add a SerpApi key or Apify token in Settings");
+    super("no job source enabled: turn one on in Settings → Job search");
     this.name = "NoApiKeysError";
   }
+}
+
+/** Legitimate feeds for the user's markets (see ./sources.ts). */
+async function feedSources(
+  queries: string[],
+  budgetFor: (provider: string, caps: { daily: number; monthly: number }) => () => Promise<unknown>,
+  log: typeof consoleLogger,
+): Promise<JobSourceAdapter[]> {
+  const profile = getMarketProfile();
+  const markets = profile.targetMarkets;
+  const out: JobSourceAdapter[] = [];
+  const base = (id: SourceId): FeedOptions => {
+    const def = SOURCE_BY_ID[id];
+    return {
+      fetchImpl: rustFetch,
+      log,
+      consumeBudget: budgetFor(id, { daily: def.daily, monthly: def.monthly }),
+      queries,
+      markets,
+      residenceCountry: profile.residenceCountry,
+      maxRequests: def.perRun,
+    };
+  };
+  const on = async (id: SourceId) => {
+    const def = SOURCE_BY_ID[id];
+    return sourceServesMarkets(def, markets) && (await isSourceEnabled(def));
+  };
+
+  if (await on("himalayas")) out.push(new HimalayasSource(base("himalayas")));
+  if (await on("jobicy")) out.push(new JobicySource(base("jobicy")));
+  if (await on("remotive")) out.push(new RemotiveSource(base("remotive")));
+  if (await on("getonboard")) out.push(new GetOnBoardSource(base("getonboard")));
+  if (await on("jooble")) {
+    const apiKey = await storageService.getApiKey("jooble");
+    const locations = markets.filter((m) => !isRegionCode(m)).map((c) => countryName(c, "en"));
+    if (apiKey && locations.length > 0) out.push(new JoobleSource({ ...base("jooble"), apiKey, locations }));
+  }
+  if (await on("adzuna")) {
+    const [appId, appKey] = await Promise.all([storageService.getApiKey("adzuna_app_id"), storageService.getApiKey("adzuna_app_key")]);
+    if (appId && appKey) out.push(new AdzunaSource({ ...base("adzuna"), appId, appKey }));
+  }
+  const boards = await getFollowedBoards();
+  if (boards.length > 0 && (await on("ats-boards"))) out.push(new AtsBoardsSource({ ...base("ats-boards"), boards }));
+  return out;
 }
 
 export interface IngestProgress {
@@ -64,11 +145,12 @@ export async function runScrape(
     storageService.getApiKey("apify"),
   ]);
 
-  const sources: JobSourceAdapter[] = [];
-  if (serpapiKey) {
+  const sources: JobSourceAdapter[] = await feedSources(config.queries, budgetFor, log);
+  if (serpapiKey && (await isSourceEnabled(SOURCE_BY_ID.serpapi))) {
     sources.push(
       new SerpApiSource({
         apiKey: serpapiKey,
+        ...serpLocale(getMarketProfile().residenceCountry),
         queries: config.queries,
         maxPagesPerQuery: config.maxPagesPerQuery,
         cursors,
@@ -81,7 +163,7 @@ export async function runScrape(
       }),
     );
   }
-  if (apifyToken) {
+  if (apifyToken && (await isSourceEnabled(SOURCE_BY_ID["apify-linkedin"]))) {
     sources.push(
       new ApifyLinkedInSource({
         token: apifyToken,

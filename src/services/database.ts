@@ -5,6 +5,8 @@ import { ulid } from "ulid";
 import * as schema from "@/db/schema";
 import { jobMatchesTagFilters } from "@/features/jobs/utils/jobTaxonomy";
 import { emitPrepDocumentChanged } from "./prep-events";
+import { computeMarketFields } from "./market-profile";
+import { jobMatchesMarketFilter } from "@/lib/markets/filter";
 import type { Job, JobSource, Company, CvRecord, NewCvRecord, ParsedCv, Application, ApplicationEvent, Interview, AtsReport, GeneratedCv, ScrapeRun, CoverLetter } from "@/types";
 import type { StarStory, InterviewPrep, GlassdoorInterviewReview, MatchAnalysisRecord, MatchAnalysis } from "@/types";
 import type { MockSession, PrepDocument, PrepDocumentKind, CvLayoutLine } from "@/types";
@@ -417,6 +419,19 @@ export async function runMigrations(): Promise<void> {
     { sql: `ALTER TABLE applications ADD COLUMN snoozed_until INTEGER` },
     { sql: `ALTER TABLE applications ADD COLUMN closed_reason TEXT` },
     { sql: `ALTER TABLE interviews ADD COLUMN interviewer_timezone TEXT` },
+    // Multi-market eligibility (src/services/market-profile.ts) and capture identity.
+    { sql: `ALTER TABLE jobs ADD COLUMN workplace TEXT` },
+    { sql: `ALTER TABLE jobs ADD COLUMN location_scope TEXT` },
+    { sql: `ALTER TABLE jobs ADD COLUMN market_eligibility TEXT` },
+    {
+      sql: `ALTER TABLE jobs ADD COLUMN is_market_eligible INTEGER DEFAULT 0`,
+      index: `CREATE INDEX IF NOT EXISTS idx_jobs_is_market_eligible ON jobs (is_market_eligible)`,
+    },
+    {
+      sql: `ALTER TABLE jobs ADD COLUMN canonical_key TEXT`,
+      index: `CREATE INDEX IF NOT EXISTS idx_jobs_canonical_key ON jobs (canonical_key)`,
+    },
+    { sql: `ALTER TABLE jobs ADD COLUMN salary_period TEXT` },
   ];
   for (const { sql: alterSql, index } of additive) {
     try {
@@ -510,8 +525,47 @@ export async function getJobByExternalId(externalId: string): Promise<Job | null
   return rows.length > 0 ? mapJob(rows[0]) : null;
 }
 
-export async function upsertJob(job: Omit<Job, "created_at">): Promise<void> {
+/**
+ * Clears the original page/paste text kept on user-added jobs older than
+ * `olderThan` (the structured fields and description stay). Rows still waiting
+ * for recovery keep theirs. Returns how many rows were cleared.
+ */
+export async function purgeRawPayloads(olderThan: number): Promise<number> {
+  const where = and(
+    eq(schema.jobs.source, "manual"),
+    sql`${schema.jobs.raw_payload} IS NOT NULL`,
+    or(eq(schema.jobs.needs_recovery, false), sql`${schema.jobs.needs_recovery} IS NULL`),
+    sql`${schema.jobs.created_at} < ${olderThan}`,
+  );
+  const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(schema.jobs).where(where);
+  if (n > 0) await db.update(schema.jobs).set({ raw_payload: null }).where(where);
+  return n;
+}
+
+/** The job saved under a capture identity ("linkedin:123", "gh:456"), if any. */
+export async function getJobByCanonicalKey(canonicalKey: string): Promise<Job | null> {
+  const rows = await db
+    .select()
+    .from(schema.jobs)
+    .leftJoin(schema.companies, eq(schema.jobs.company_id, schema.companies.id))
+    .where(eq(schema.jobs.canonical_key, canonicalKey))
+    .limit(1);
+  return rows.length > 0 ? mapJob(rows[0].jobs, rows[0].companies?.name) : null;
+}
+
+export async function upsertJob(input: Omit<Job, "created_at">): Promise<void> {
   const now = Date.now();
+  // Eligibility is derived from the text + the user's markets on every write, so
+  // no caller can persist a job with stale or missing verdicts.
+  const job = { ...input, ...computeMarketFields(input) };
+  const marketValues = {
+    workplace: job.workplace ?? null,
+    location_scope: job.location_scope ? JSON.stringify(job.location_scope) : null,
+    market_eligibility: job.market_eligibility ? JSON.stringify(job.market_eligibility) : null,
+    is_market_eligible: job.is_market_eligible ?? false,
+    canonical_key: job.canonical_key ?? null,
+    salary_period: job.salary_period ?? null,
+  };
   await db
     .insert(schema.jobs)
     .values({
@@ -539,6 +593,7 @@ export async function upsertJob(job: Omit<Job, "created_at">): Promise<void> {
       created_at: now,
       needs_recovery: job.needs_recovery,
       raw_payload: job.raw_payload,
+      ...marketValues,
     })
     .onConflictDoUpdate({
       target: schema.jobs.id,
@@ -563,8 +618,18 @@ export async function upsertJob(job: Omit<Job, "created_at">): Promise<void> {
         scraped_at: job.scraped_at,
         needs_recovery: job.needs_recovery,
         raw_payload: job.raw_payload,
+        ...marketValues,
       },
     });
+}
+
+function parseJson<T>(raw: string | null | undefined): T | null {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
 }
 
 export async function getFilteredJobs(filters: import("@/types").JobFilters): Promise<Job[]> {
@@ -585,12 +650,10 @@ export async function getFilteredJobs(filters: import("@/types").JobFilters): Pr
   }
 
   // Pasted ("manual") jobs bypass the location filters: the user chose them explicitly.
-  if (filters.drFilter === "dr_friendly") {
-    conditions.push(or(eq(schema.jobs.is_dr_friendly, true), eq(schema.jobs.source, "manual")));
-  } else if (filters.drFilter === "explicit_latam") {
-    conditions.push(
-      or(eq(schema.jobs.dr_eligibility, "explicit_latam"), eq(schema.jobs.source, "manual")),
-    );
+  // The indexed is_market_eligible flag is the SQL prefilter; the per-market and
+  // "explicit" refinements read the JSON verdicts in JS below.
+  if (filters.eligibilityFilter !== "all") {
+    conditions.push(or(eq(schema.jobs.is_market_eligible, true), eq(schema.jobs.source, "manual")));
   }
   // "all" → no location condition (includes restricted + ambiguous).
 
@@ -667,6 +730,10 @@ export async function getFilteredJobs(filters: import("@/types").JobFilters): Pr
     });
   }
 
+  if (filters.eligibilityFilter !== "all" || filters.markets.length > 0) {
+    jobs = jobs.filter((j) => jobMatchesMarketFilter(j, filters.eligibilityFilter, filters.markets));
+  }
+
   // Derived tech tags aren't columns, so filter them in JS (same pattern as search).
   if (
     filters.languages.length > 0 ||
@@ -686,12 +753,16 @@ export async function getFilteredJobs(filters: import("@/types").JobFilters): Pr
 }
 
 /**
- * DR-friendly jobs for the shareable report, newest first. `since` filters to
- * rows synced after the previous report (local insert time), or null for all.
+ * Market-eligible jobs for the shareable report, newest first (the report keeps
+ * those open to its specific market). `since` filters to rows synced after the
+ * previous report (local insert time), or null for all.
  */
 export async function getJobsForReport(since: number | null): Promise<Job[]> {
-  // Pasted jobs are personal picks, not part of the shareable DR report.
-  const conditions = [eq(schema.jobs.is_dr_friendly, true), ne(schema.jobs.source, "manual")];
+  // Pasted jobs are personal picks, not part of the shareable report.
+  const conditions = [
+    or(eq(schema.jobs.is_market_eligible, true), eq(schema.jobs.is_dr_friendly, true)),
+    ne(schema.jobs.source, "manual"),
+  ];
   if (since !== null) {
     conditions.push(sql`${schema.jobs.created_at} > ${since}`);
   }
@@ -743,6 +814,12 @@ function mapJob(row: typeof schema.jobs.$inferSelect, companyName?: string | nul
     created_at: row.created_at,
     needs_recovery: row.needs_recovery ?? false,
     raw_payload: row.raw_payload ?? null,
+    workplace: (row.workplace ?? null) as Job["workplace"],
+    location_scope: parseJson<NonNullable<Job["location_scope"]>>(row.location_scope),
+    market_eligibility: parseJson<NonNullable<Job["market_eligibility"]>>(row.market_eligibility),
+    is_market_eligible: row.is_market_eligible ?? false,
+    canonical_key: row.canonical_key ?? null,
+    salary_period: (row.salary_period ?? null) as Job["salary_period"],
   };
 }
 

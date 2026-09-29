@@ -15,9 +15,10 @@
  * - Output is written in the job post's language.
  */
 import type { Job, MatchAnalysis, ParsedCv } from "@/types";
+import { formatCvRulesForPrompt, type CvRules } from "@/lib/markets/cv-rules";
 import type { CvChatTurn } from "./prompts";
 
-export type CvOutputLanguage = "en" | "es";
+export type CvOutputLanguage = "en" | "es" | "pt" | "de";
 
 export type SkillImportance = "critical" | "important" | "nice_to_have";
 
@@ -45,6 +46,11 @@ export interface CvOptimizationInput {
    * section (cv-tailor-sectioned.ts) instead of rewriting the whole markdown at once.
    */
   sourceCv?: ParsedCv;
+  /**
+   * CV conventions of the job's market(s) (personal data, length). Absent = no
+   * market block (older sessions, tests).
+   */
+  market?: { rules: CvRules; label: string };
 }
 
 export interface CvOptimizationChatInput extends Omit<CvOptimizationInput, "analysis"> {
@@ -65,7 +71,12 @@ export interface PromptPair {
   prompt: string;
 }
 
-export const LANGUAGE_NAME: Record<CvOutputLanguage, string> = { en: "English", es: "Spanish" };
+export const LANGUAGE_NAME: Record<CvOutputLanguage, string> = {
+  en: "English",
+  es: "Spanish",
+  pt: "Brazilian Portuguese",
+  de: "German",
+};
 
 /** Canonical headings/labels per output language — the app's parser recognizes these. */
 export const VOCAB: Record<
@@ -112,6 +123,34 @@ export const VOCAB: Record<
     technologies: "Tecnologías",
     roleConnector: "en",
     present: "Actualidad",
+  },
+  pt: {
+    summary: "Resumo Profissional",
+    skills: "Competências",
+    technical: "Competências Técnicas",
+    soft: "Competências Comportamentais",
+    experience: "Experiência Profissional",
+    projects: "Projetos",
+    education: "Formação Acadêmica",
+    certifications: "Certificações",
+    languages: "Idiomas",
+    technologies: "Tecnologias",
+    roleConnector: "na",
+    present: "Atual",
+  },
+  de: {
+    summary: "Profil",
+    skills: "Kenntnisse",
+    technical: "Fachkenntnisse",
+    soft: "Soft Skills",
+    experience: "Berufserfahrung",
+    projects: "Projekte",
+    education: "Ausbildung",
+    certifications: "Zertifikate",
+    languages: "Sprachen",
+    technologies: "Technologien",
+    roleConnector: "bei",
+    present: "heute",
   },
 };
 
@@ -210,7 +249,7 @@ function rulesStructure(lang: CvOutputLanguage): string {
   const v = VOCAB[lang];
   return `## Structure
 - Markdown only: \`#\` for the name, \`##\` for sections, \`###\` for roles/degrees/projects, \`- \` for bullets. No tables, HTML, emoji or code fences.
-- Keep the contact block (lines under the name) exactly as in the source.
+- Keep the contact block (lines under the name) exactly as in the source — except personal data the market conventions say to remove.
 - Keep EVERY section of the source, in the same order — including ${v.projects}, ${v.education}, ${v.certifications}, ${v.languages} and any other section. Keep the same roles, in the same order.
 - Use these section headings: "${v.summary}", "${v.skills}", "${v.experience}", "${v.projects}", "${v.education}", "${v.certifications}", "${v.languages}" (translate any other heading).
 - Role headings: \`### {Title} ${v.roleConnector} {Company}\`, followed by the date line in italics exactly as in the source (translate only month names and "${v.present}" when the language changes).
@@ -249,7 +288,9 @@ ${RULES_NUMBERS}
 
 ${RULES_NEVER_INVENT}
 
-${rulesStructure(lang)}
+${input.market ? `${formatCvRulesForPrompt(input.market.rules, input.market.label)}
+
+` : ""}${rulesStructure(lang)}
 
 ${rulesLanguage(lang)}
 
@@ -323,7 +364,9 @@ ${RULES_NUMBERS}
 
 ${RULES_NEVER_INVENT}
 
-${rulesLanguage(lang)}
+${input.market ? `${formatCvRulesForPrompt(input.market.rules, input.market.label)}
+
+` : ""}${rulesLanguage(lang)}
 
 ${RULES_STYLE}
 - Keep the draft's markdown structure: \`###\` role headings with their italic date lines, \`- \` bullets, \`**Label:**\` skill lines.

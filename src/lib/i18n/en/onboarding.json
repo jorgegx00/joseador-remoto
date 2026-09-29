@@ -61,5 +61,8 @@
     "follow_ups_title": "Follow-ups pending",
     "follow_ups_body_one": "{{count}} application could use a follow-up or thank-you note",
     "follow_ups_body_other": "{{count}} applications could use a follow-up or thank-you note"
-  }
+  },
+  "step_markets": "Markets",
+  "markets_title": "Where are you job hunting?",
+  "markets_description": "Pick the country you live in and the markets you're targeting — countries, regions or remote worldwide. We use it to flag which jobs you can actually take and to follow each country's CV conventions."
 }

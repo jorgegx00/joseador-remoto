@@ -83,7 +83,8 @@ export function cleanPastedText(text: string): string {
     .replace(/[^\S\n]+/g, " ");
   return sanitizeText(pre)
     .split("\n")
-    .map((line) => line.trim())
+    // Markdown heading markers ("## About the role") from captured or copied pages.
+    .map((line) => line.trim().replace(/^#{1,6}\s+/, ""))
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
@@ -403,7 +404,7 @@ const TIME_AGO_RE =
   /\b\d+ (?:minute|hour|day|week|month|year)s? ago\b|\b(?:an?|one) (?:minute|hour|day|week|month|year) ago\b|\bhace (?:\d|un|una|unos|unas)\b|\b(?:just now|yesterday|today|ayer|hoy|reposted)\b/;
 
 const LOCATION_ISH_RE =
-  /\b(?:remote|remoto|remota|anywhere|worldwide|global|latam|latin america|latinoamerica|hybrid|hibrido|on ?site|presencial|usa|us|united states|europe|emea|americas|canada|mexico|colombia|argentina|brazil|brasil|chile|peru|dominican republic|republica dominicana|santo domingo|costa rica|uruguay|ecuador|spain|espana)\b/;
+  /\b(?:remote|remoto|remota|anywhere|worldwide|global|latam|latin america|latinoamerica|hybrid|hibrido|on ?site|presencial|usa|us|united states|europe|emea|americas|canada|mexico|colombia|argentina|brazil|brasil|chile|peru|dominican republic|republica dominicana|santo domingo|costa rica|uruguay|ecuador|spain|espana|puerto rico|germany|deutschland|alemania|united kingdom|uk|london|berlin|madrid|sao paulo|bogota|medellin|buenos aires|santiago)\b/;
 const ROLE_ISH_RE =
   /\b(?:senior|junior|jr|sr|ssr|semi ?senior|mid|lead|staff|principal|intern|trainee|backend|back end|frontend|front end|full ?stack|mobile|web|data|platform|devops|ios|android|cloud|security|qa|ux|ui|ml|ai|contract|contractor|freelance|part time|full time|tiempo completo|medio tiempo)\b/;
 const REMOTE_RE =
@@ -504,6 +505,25 @@ function splitTitleDash(
 }
 
 /** LinkedIn-style "Location <dot> 2 weeks ago <dot> 40 applicants" line -> "Location". */
+/**
+ * A header line "<Company> — <Location>" / "<Company> · <Location>" near the top
+ * (career pages, captured posts): two segments, the second location-like.
+ */
+function companyLocationLine(lines: string[], title: string): { company: string; location: string } | null {
+  for (const line of lines.slice(0, 6)) {
+    if (line === title || line.length > 140) continue;
+    const segments = line
+      .split(/\s+[\u2014\u2013|\u00b7\u2022]\s+/u)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (segments.length !== 2) continue;
+    const [left, right] = segments;
+    if (!LOCATION_ISH_RE.test(fold(right)) || LOCATION_ISH_RE.test(fold(left)) || left.length > 80) continue;
+    return { company: cleanCompany(left), location: cleanValue(right) };
+  }
+  return null;
+}
+
 function locationFromMetadataLine(lines: string[], company: string): string {
   for (const line of lines.slice(0, 20)) {
     const segments = line
@@ -572,7 +592,7 @@ function detectSeniority(title: string): SeniorityLevel | null {
 
 // --- Salary ----------------------------------------------------------------
 
-const CURRENCY_CODES = "USD|EUR|GBP|CAD|AUD|DOP|MXN|COP|ARS|CLP|PEN|BRL|UYU|CRC";
+const CURRENCY_CODES = "USD|EUR|GBP|CAD|AUD|DOP|MXN|COP|ARS|CLP|PEN|BRL|UYU|CRC|CHF";
 const LATAM_CURRENCIES: ReadonlySet<string> = new Set([
   "DOP",
   "MXN",
@@ -586,7 +606,7 @@ const LATAM_CURRENCIES: ReadonlySet<string> = new Set([
 ]);
 
 function currencyPrefix(name: string): string {
-  return String.raw`(?<${name}>US\$|U\$S|RD\$|MX\$|COP\$|CA\$|C\$|A\$|R\$|\p{Sc}|\b(?:${CURRENCY_CODES})\b)?`;
+  return String.raw`(?<${name}>US\$|U\$S|RD\$|MX\$|COP\$|COL\$|CLP\$|AR\$|CA\$|C\$|A\$|R\$|\p{Sc}|\b(?:${CURRENCY_CODES})\b)?`;
 }
 function amount(name: string, mult: string): string {
   // Whole numbers only (no match starting/ending mid-number), then an optional
@@ -639,7 +659,9 @@ function currencyCode(raw: string | undefined): string | null {
   if (r === "$" || r === "US$" || r === "U$S" || r === "DOLLARS" || /^D.LARES$/u.test(r)) return "USD";
   if (r === "RD$") return "DOP";
   if (r === "MX$") return "MXN";
-  if (r === "COP$") return "COP";
+  if (r === "COP$" || r === "COL$") return "COP";
+  if (r === "CLP$") return "CLP";
+  if (r === "AR$") return "ARS";
   if (r === "CA$" || r === "C$") return "CAD";
   if (r === "A$") return "AUD";
   if (r === "R$") return "BRL";
@@ -837,6 +859,13 @@ export function heuristicJobDraft(text: string): PastedJobDraft {
     }
   }
 
+  if (!company || !location) {
+    const pair = companyLocationLine(lines, title);
+    if (pair) {
+      if (!company && !isJobBoardName(pair.company)) company = pair.company;
+      if (!location) location = pair.location;
+    }
+  }
   if (!location) location = locationFromMetadataLine(lines, company);
   if (!location && REMOTE_RE.test(folded)) location = "Remote";
 

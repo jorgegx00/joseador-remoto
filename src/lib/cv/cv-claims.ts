@@ -20,18 +20,18 @@ import { STOP_WORDS } from "@/lib/ats/types";
 // ---------------------------------------------------------------------------
 
 const MONTHS: Record<string, number> = {
-  jan: 1, january: 1, ene: 1, enero: 1,
-  feb: 2, february: 2, febrero: 2,
-  mar: 3, march: 3, marzo: 3,
+  jan: 1, january: 1, ene: 1, enero: 1, janeiro: 1, januar: 1,
+  feb: 2, february: 2, febrero: 2, fev: 2, fevereiro: 2, februar: 2,
+  mar: 3, march: 3, marzo: 3, marco: 3, marz: 3,
   apr: 4, april: 4, abr: 4, abril: 4,
-  may: 5, mayo: 5,
-  jun: 6, june: 6, junio: 6,
-  jul: 7, july: 7, julio: 7,
+  may: 5, mayo: 5, mai: 5, maio: 5,
+  jun: 6, june: 6, junio: 6, junho: 6, juni: 6,
+  jul: 7, july: 7, julio: 7, julho: 7, juli: 7,
   aug: 8, august: 8, ago: 8, agosto: 8,
-  sep: 9, sept: 9, september: 9, septiembre: 9, setiembre: 9, set: 9,
-  oct: 10, october: 10, octubre: 10,
-  nov: 11, november: 11, noviembre: 11,
-  dec: 12, december: 12, dic: 12, diciembre: 12,
+  sep: 9, sept: 9, september: 9, septiembre: 9, setiembre: 9, set: 9, setembro: 9,
+  oct: 10, october: 10, octubre: 10, out: 10, outubro: 10, okt: 10, oktober: 10,
+  nov: 11, november: 11, noviembre: 11, novembro: 11,
+  dec: 12, december: 12, dic: 12, diciembre: 12, dez: 12, dezembro: 12, dezember: 12,
 };
 
 const MONTH_WORDS = Object.keys(MONTHS).join("|");
@@ -43,7 +43,7 @@ export function monthFromName(word: string): number | null {
 }
 
 const PRESENT_RE =
-  /\b(?:present|current|currently|now|today|ongoing|actualidad|actual|actualmente|presente|hoy|la fecha|en curso)\b/;
+  /\b(?:present|current|currently|now|today|ongoing|actualidad|actual|actualmente|presente|hoy|la fecha|en curso|atual|atualmente|heute|aktuell)\b/;
 
 export type CvDate = { year: number; month: number | null } | "present";
 

@@ -28,9 +28,11 @@ const SUBHEADING_SIZE = 21; // 10.5pt
 const TEXT_COLOR = "1A1A1A";
 const RULE_COLOR = "8A8F98";
 
-/** US Letter in twips (8.5in x 11in); margins match the PDF (48pt / 44pt). */
-const LETTER_WIDTH = 12240;
-const LETTER_HEIGHT = 15840;
+/** Page sizes in twips: US Letter (8.5in x 11in), A4 (210mm x 297mm). Margins match the PDF (48pt / 44pt). */
+const PAGE_TWIPS = {
+  LETTER: { width: 12240, height: 15840 },
+  A4: { width: 11906, height: 16838 },
+} as const;
 const MARGIN_X = 960;
 const MARGIN_Y = 880;
 
@@ -197,7 +199,7 @@ export function buildDocxDocument(blocks: MdBlock[], meta: CvExportMeta): Docume
       {
         properties: {
           page: {
-            size: { width: LETTER_WIDTH, height: LETTER_HEIGHT },
+            size: PAGE_TWIPS[meta.pageSize ?? "LETTER"],
             margin: { top: MARGIN_Y, bottom: MARGIN_Y, left: MARGIN_X, right: MARGIN_X },
           },
         },

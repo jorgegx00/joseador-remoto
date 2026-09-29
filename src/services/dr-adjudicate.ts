@@ -13,7 +13,7 @@
  * per feedback_no_drop_on_parse_fail).
  */
 
-import { getAllJobs, upsertJob } from "@/services/database";
+import { getAllJobs, getJobById, upsertJob } from "@/services/database";
 import { getConfig } from "@/services/llm";
 import { LlmService } from "@/lib/llm";
 import { useSettingsStore } from "@/stores/settingsStore";
@@ -112,8 +112,11 @@ export async function adjudicateAmbiguousDrJobs(
       if (job.dr_eligibility === r.eligibility && job.is_dr_friendly === friendly) {
         continue;
       }
+      // Re-read: the batch call took a while and the row may have changed meanwhile.
+      const fresh = await getJobById(job.id);
+      if (!fresh) continue;
       await upsertJob({
-        ...job,
+        ...fresh,
         is_dr_friendly: friendly,
         dr_eligibility: r.eligibility,
         dr_filter_reason: `AI: ${r.reason}`,

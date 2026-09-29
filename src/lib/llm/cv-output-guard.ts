@@ -272,3 +272,91 @@ function applyOnePatch(cv: string, patch: CvPatch): string | null {
   if (after) parts.push(after);
   return parts.join("\n\n").trim() + "\n";
 }
+
+// ---------------------------------------------------------------------------
+// Market personal-data rules (src/lib/markets/cv-rules.ts)
+// ---------------------------------------------------------------------------
+
+type PersonalRule = "omit" | "if_requested" | "common";
+
+export interface PersonalDataRules {
+  dateOfBirth: PersonalRule;
+  maritalStatus: PersonalRule;
+  nationalId: "omit" | "if_requested";
+}
+
+const LABEL_END = String.raw`(?:\*\*|__)?\s*[:：]`;
+const PERSONAL_LABELS: Record<keyof PersonalDataRules, RegExp> = {
+  dateOfBirth: new RegExp(
+    String.raw`^(?:\*\*|__)?(?:date of birth|birth ?date|dob|born|age|fecha de nacimiento|f\. ?de nac\.?|nacimiento|edad|data de nascimento|idade|geburtsdatum|geboren|alter)${LABEL_END}`,
+    "i",
+  ),
+  maritalStatus: new RegExp(
+    String.raw`^(?:\*\*|__)?(?:marital status|civil status|estado civil|estado conyugal|nationality|nacionalidad|nacionalidade|staatsangeh[öo]rigkeit|familienstand|religion|religi[óo]n|children|hijos|filhos|kinder)${LABEL_END}`,
+    "i",
+  ),
+  nationalId: new RegExp(
+    String.raw`^(?:\*\*|__)?(?:c[ée]dula(?: de identidad)?|c\.i\.|dni|nie|nif|curp|rfc|rut|cpf|rg|ssn|social security(?: number)?|sin|id number|identification(?: number)?|passport(?: number)?|pasaporte|personalausweis)${LABEL_END}`,
+    "i",
+  ),
+};
+
+/** Phrases in a job post that explicitly ask for the field ("adjuntar cédula"). */
+const REQUEST_HINTS: Record<keyof PersonalDataRules, RegExp> = {
+  dateOfBirth: /\b(date of birth|birth ?date|fecha de nacimiento|edad|data de nascimento|geburtsdatum)\b/i,
+  maritalStatus: /\b(marital status|estado civil|familienstand)\b/i,
+  nationalId: /\b(c[ée]dula|dni|curp|rut|cpf|national id|id number)\b/i,
+};
+
+/**
+ * Removes personal data the target market's conventions (or anti-discrimination
+ * law) say must not be on a CV: "Fecha de nacimiento: …", "Estado civil: …",
+ * "Cédula: …". Works on whole lines and on "|"/"·"-separated contact segments.
+ * "if_requested" fields are kept only when `jobText` asks for them.
+ */
+export function stripForbiddenPersonalData(
+  markdown: string,
+  rules: PersonalDataRules,
+  jobText = "",
+): { markdown: string; removed: string[] } {
+  const strip = (Object.keys(PERSONAL_LABELS) as Array<keyof PersonalDataRules>).filter((field) => {
+    const rule = rules[field];
+    if (rule === "common") return false;
+    return rule === "omit" || !REQUEST_HINTS[field].test(jobText);
+  });
+  if (strip.length === 0) return { markdown, removed: [] };
+
+  const removed: string[] = [];
+  const isPersonal = (segment: string) => {
+    const s = segment.replace(/^[-*]\s+/, "").trim();
+    return strip.some((field) => PERSONAL_LABELS[field].test(s));
+  };
+
+  const out: string[] = [];
+  for (const line of markdown.split("\n")) {
+    if (/^#/.test(line)) {
+      out.push(line);
+      continue;
+    }
+    if (isPersonal(line)) {
+      removed.push(line.trim());
+      continue;
+    }
+    const parts = line.split(/(\s+[|·•]\s+)/);
+    if (parts.length > 1) {
+      const kept: string[] = [];
+      for (let i = 0; i < parts.length; i += 2) {
+        if (isPersonal(parts[i])) removed.push(parts[i].trim());
+        else kept.push(parts[i]);
+      }
+      if (kept.length !== Math.ceil(parts.length / 2)) {
+        const sep = parts[1]?.trim() ? ` ${parts[1].trim()} ` : " | ";
+        const joined = kept.map((k) => k.trim()).filter(Boolean).join(sep);
+        if (joined) out.push(joined);
+        continue;
+      }
+    }
+    out.push(line);
+  }
+  return { markdown: out.join("\n"), removed };
+}

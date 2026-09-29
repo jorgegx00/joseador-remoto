@@ -3,8 +3,8 @@ import { RouterProvider } from "@tanstack/react-router";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { router } from "@/router";
 import { runMigrations } from "@/services/database";
-import { backfillDrFlagsIfNeeded } from "@/services/dr-backfill";
-import { adjudicateAmbiguousDrJobs } from "@/services/dr-adjudicate";
+import { reconcileEligibility } from "@/services/eligibility-sync";
+import { applyRetention } from "@/services/privacy";
 import { useJobStore } from "@/stores/jobStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useOllamaStore } from "@/stores/ollamaStore";
@@ -75,27 +75,11 @@ function App() {
           console.info(`[App] Ollama auto-start: ${started ? "ready" : "failed"}`);
         }
 
-        // DR/LATAM eligibility reconciliation. Fire-and-forget so it never blocks
-        // first render. Two bounded steps: (1) a cheap keyword reclassification that
-        // reruns once when the filter rules change, then (2) LLM adjudication of the
-        // residual "ambiguous" rows (no-op when no LLM provider is configured).
-        void (async () => {
-          try {
-            const kw = await backfillDrFlagsIfNeeded();
-            if (kw.ran) {
-              console.info(`[App] DR keyword backfill: updated ${kw.updated}/${kw.total} jobs`);
-            }
-            const adj = await adjudicateAmbiguousDrJobs();
-            if (adj.ran && adj.updated > 0) {
-              console.info(`[App] DR LLM adjudication: updated ${adj.updated}/${adj.processed} jobs`);
-            }
-            if ((kw.ran && kw.updated > 0) || (adj.ran && adj.updated > 0)) {
-              void useJobStore.getState().fetchJobs();
-            }
-          } catch (err) {
-            console.error("[App] DR reconciliation failed:", err);
-          }
-        })();
+        void applyRetention().catch((err) => console.warn("[App] retention cleanup failed:", err));
+
+        // Location-eligibility reconciliation (DR tiers + per-market verdicts).
+        // Fire-and-forget so it never blocks first render.
+        void reconcileEligibility();
       } catch (error) {
         console.error("[App] Initialization failed:", error);
       } finally {
@@ -116,9 +100,17 @@ function App() {
     };
     window.addEventListener("focus", onFocus);
 
+    // Recompute job eligibility whenever the user's markets change.
+    const unsubscribeMarkets = useSettingsStore.subscribe((state, prev) => {
+      if (state.hydrated && prev.hydrated && state.market !== prev.market) {
+        void reconcileEligibility();
+      }
+    });
+
     return () => {
       cancelled = true;
       window.removeEventListener("focus", onFocus);
+      unsubscribeMarkets();
     };
   }, []);
 

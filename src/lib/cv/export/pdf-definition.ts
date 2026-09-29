@@ -131,7 +131,7 @@ export function buildPdfDocDefinition(
   meta: CvExportMeta,
   opts?: { pageSize?: CvPdfPageSize },
 ): TDocumentDefinitions {
-  const pageSize = opts?.pageSize ?? "LETTER";
+  const pageSize = opts?.pageSize ?? meta.pageSize ?? "LETTER";
   const contentWidth = PAGE_WIDTH_PT[pageSize] - CV_PDF_MARGINS[0] - CV_PDF_MARGINS[2];
   const content: Content[] = [];
 

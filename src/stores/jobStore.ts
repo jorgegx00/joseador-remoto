@@ -38,7 +38,7 @@ interface JobState {
   loadBlacklist: () => Promise<void>;
   setBlacklist: (names: string[] | null) => Promise<void>;
   getJob: (id: string) => Promise<Job | null>;
-  drFriendlyJobs: () => Job[];
+  eligibleJobs: () => Job[];
   jobsBySource: (source: string) => Job[];
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -47,10 +47,11 @@ interface JobState {
 const defaultFilters: JobFilters = {
   search: "",
   sources: [],
-  // Jobs are ingested unfiltered (DR-friendliness is a flag, not a gate), so
-  // the list view defaults to the DR-friendly slice; users can tighten to
-  // explicit LATAM/DR only, or loosen to all.
-  drFilter: "dr_friendly",
+  // Jobs are ingested unfiltered (eligibility is a flag, not a gate), so the list
+  // view defaults to jobs eligible for the user's markets; users can tighten to
+  // explicit mentions only, or loosen to all.
+  eligibilityFilter: "eligible",
+  markets: [],
   seniorityLevels: [],
   employmentTypes: [],
   salaryMin: null,
@@ -99,7 +100,8 @@ export const useJobStore = create<JobState>((set, get) => ({
       const hasActiveFilters =
         filters.search ||
         filters.sources.length > 0 ||
-        filters.drFilter !== "all" ||
+        filters.eligibilityFilter !== "all" ||
+        filters.markets.length > 0 ||
         filters.seniorityLevels.length > 0 ||
         filters.employmentTypes.length > 0 ||
         filters.salaryMin !== null ||
@@ -174,8 +176,8 @@ export const useJobStore = create<JobState>((set, get) => ({
     }
   },
 
-  drFriendlyJobs: () => {
-    return get().jobs.filter((j) => j.is_dr_friendly);
+  eligibleJobs: () => {
+    return get().jobs.filter((j) => j.is_market_eligible);
   },
 
   jobsBySource: (source: string) => {

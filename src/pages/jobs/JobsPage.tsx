@@ -54,7 +54,7 @@ const OTHER_GROUP = "__other__";
 
 export function JobsPage() {
   const { t } = useTranslation("jobs");
-  const { jobs, totalCount, isLoading, drFriendlyCount } = useJobs();
+  const { jobs, totalCount, isLoading, eligibleCount } = useJobs();
   const { filters, setSortBy, hasActiveFilters } = useJobFilters();
   const [groupBy, setGroupBy] = useState<GroupBy>("none");
   const [pasteOpen, setPasteOpen] = useState(false);
@@ -126,7 +126,7 @@ export function JobsPage() {
                 {t("header.showing_count", {
                   shown: jobs.length,
                   total: totalCount,
-                  drFriendly: drFriendlyCount,
+                  eligible: eligibleCount,
                 })}
               </Badge>
             </div>

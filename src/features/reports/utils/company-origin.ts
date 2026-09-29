@@ -8,6 +8,8 @@
  */
 
 import type { Company } from "@/types";
+import { countryName } from "@/lib/markets/countries";
+import { isRegionCode, regionContains } from "@/lib/markets/regions";
 
 const COUNTRY_NAMES_ES: Record<string, string> = {
   US: "Estados Unidos",
@@ -41,12 +43,26 @@ const COUNTRY_NAMES_ES: Record<string, string> = {
 const DOMINICAN_NAME_HINTS = /(dominican[ao]?|república dominicana|republica dominicana|santo domingo|\brd\b)/i;
 const DOMINICAN_TLD = /\.do(\/|$)/i;
 
-/** Spanish "Tipo" line for a job's company. */
-export function companyOrigin(company: Company | undefined): string {
-  const hq = company?.headquarters_country?.trim().toUpperCase() ?? "";
+function localLabel(market: string, hq: string): string {
   if (hq === "DO") return "Local (empresa dominicana)";
-  if (hq) return `Extranjera (${COUNTRY_NAMES_ES[hq] ?? hq})`;
-  if (company && (DOMINICAN_NAME_HINTS.test(company.name) || DOMINICAN_TLD.test(company.website ?? ""))) {
+  return `Local (${COUNTRY_NAMES_ES[hq] ?? countryName(hq, "es")})`;
+}
+
+/**
+ * Spanish "Tipo" line for a job's company, relative to the report's market: a
+ * company headquartered in the market (or inside a region market) is "Local".
+ * Name/website hints only exist for the Dominican Republic.
+ */
+export function companyOrigin(company: Company | undefined, market = "DO"): string {
+  const hq = company?.headquarters_country?.trim().toUpperCase() ?? "";
+  const isLocal = (code: string) => (isRegionCode(market) ? market !== "WORLDWIDE" && regionContains(market, code) : code === market);
+  if (hq && isLocal(hq)) return localLabel(market, hq);
+  if (hq) return `Extranjera (${COUNTRY_NAMES_ES[hq] ?? countryName(hq, "es")})`;
+  if (
+    isLocal("DO") &&
+    company &&
+    (DOMINICAN_NAME_HINTS.test(company.name) || DOMINICAN_TLD.test(company.website ?? ""))
+  ) {
     return "Local (empresa dominicana)";
   }
   return "Extranjera";

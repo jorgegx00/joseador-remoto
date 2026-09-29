@@ -1,6 +1,6 @@
 {
   "title": "Reports",
-  "subtitle": "Generate a plain-text report of jobs that hire in DR, ready to share",
+  "subtitle": "Generate a plain-text report of jobs open to one of your markets, ready to share",
   "generate_title": "Jobs report",
   "last_report": "Last report: {{when}}",
   "no_previous_report": "No report generated yet — the first one will include all jobs",
@@ -16,5 +16,6 @@
   "save": "Save .txt",
   "saved": "Report saved to {{path}}",
   "save_failed": "Could not save: {{message}}",
-  "preview_title": "Preview"
+  "preview_title": "Preview",
+  "market": "Market"
 }

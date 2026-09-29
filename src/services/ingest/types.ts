@@ -21,6 +21,8 @@ export interface RawSourceJob {
   employment_type?: string;
   posted_at?: number;
   work_from_home?: boolean;
+  /** Stable posting identity when known ("gh:123", "lever:<uuid>"): company boards. */
+  canonical_key?: string;
   /** Verbatim upstream payload, preserved for LLM recovery when fields are missing. */
   raw_payload: string;
 }

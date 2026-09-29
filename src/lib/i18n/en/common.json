@@ -117,10 +117,6 @@
     "confirm_apply": "Confirm application to this job?",
     "confirm_reset": "Reset to default values? Changes will be lost."
   },
-  "dr_friendly": {
-    "dr_friendly": "DR Friendly",
-    "check_eligibility": "Check Eligibility"
-  },
   "time": {
     "today": "Today",
     "yesterday": "Yesterday",
@@ -188,5 +184,47 @@
     "load": "Load",
     "unload": "Unload",
     "settings": "Settings"
+  },
+  "markets": {
+    "regions": {
+      "WORLDWIDE": "Remote – worldwide",
+      "LATAM": "Latin America (remote)",
+      "CARIBBEAN": "Caribbean (remote)",
+      "NA": "North America (remote)",
+      "EU": "European Union (remote)",
+      "EUROPE": "Europe (remote)",
+      "EMEA": "EMEA (remote)",
+      "APAC": "Asia-Pacific (remote)"
+    },
+    "picker": {
+      "placeholder": "Add a country or region…",
+      "search": "Search countries or regions",
+      "empty": "No country or region matches.",
+      "group_regions": "Remote & regions",
+      "group_suggested": "Suggested",
+      "group_all": "All countries",
+      "remove": "Remove {{name}}",
+      "select_country": "Select a country"
+    },
+    "eligibility": {
+      "explicit": "Open to {{market}}",
+      "global": "Worldwide remote",
+      "restricted": "Not open to your markets",
+      "ambiguous": "Check eligibility",
+      "per_market": "By market",
+      "eligible_short": "Eligible"
+    },
+    "header_chip": "Job hunting in",
+    "header_chip_aria": "Target markets: {{markets}}. Change",
+    "workplace": {
+      "remote": "Remote",
+      "hybrid": "Hybrid",
+      "onsite": "On-site",
+      "unknown": "Workplace unknown"
+    },
+    "visa": {
+      "yes": "Visa sponsorship offered",
+      "no": "No visa sponsorship"
+    }
   }
 }

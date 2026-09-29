@@ -4,7 +4,9 @@
     "general": "General",
     "llm": "AI Models",
     "scraping": "Job Search",
-    "blacklist": "Blacklist"
+    "blacklist": "Blacklist",
+    "markets": "Markets",
+    "privacy": "Privacy"
   },
   "general": {
     "language": "Language",
@@ -29,7 +31,7 @@
     "about": "About",
     "app_name": "Joseador Remoto",
     "version": "Version {{version}}",
-    "app_description": "Job search assistant for Dominican Republic tech professionals",
+    "app_description": "Job search assistant for tech professionals — pick the countries you're job hunting in",
     "github_link": "View on GitHub",
     "coming_soon": "Coming soon"
   },
@@ -130,7 +132,7 @@
   },
   "scraping": {
     "title": "Job Search (Scraping)",
-    "description": "Jobs are fetched directly by this app using your own API keys (BYOT) — no server involved. All remote tech jobs are stored; DR-friendliness is shown as a badge and filter, never used to discard jobs.",
+    "description": "\"Search jobs\" pulls postings from the sources below — free, legitimate feeds work out of the box. Everything runs on this computer; keys stay in your system's credential store. Every job is kept (eligibility for your markets is a badge and filter, never a reason to drop one).",
     "keys_title": "API Keys",
     "serpapi_title": "SerpApi (Google Jobs)",
     "serpapi_hint": "Free plan: 250 searches/month (1 page = 1 search = up to 10 jobs).",
@@ -164,5 +166,69 @@
     "description": "Jobs from these companies are hidden everywhere — the job list, recommendations and the report. Add scam or unwanted companies by name; remove one and its jobs come back. Matching is case-insensitive.",
     "placeholder": "e.g. Hire Feed",
     "empty": "No blocked companies yet."
+  },
+  "markets": {
+    "title": "Where are you job hunting?",
+    "description": "Job eligibility, sources, CV conventions and salary formatting follow these markets. Changes apply immediately.",
+    "residence": "Country you live in",
+    "residence_help": "Used to judge remote roles (\"remote from where I live\"). It never leaves this device.",
+    "targets": "Target markets",
+    "targets_help": "Countries you'd work in (on-site or remote), regions like Latin America, or remote worldwide.",
+    "work_auth": "Countries you can legally work in",
+    "work_auth_help": "Citizenship, residency or visas. Jobs that require these authorizations won't be marked as restricted.",
+    "relocate": "Open to relocating",
+    "relocate_help": "Shown to the CV assistant; on-site roles abroad still need work authorization.",
+    "contractor": "Open to contractor roles",
+    "contractor_help": "Many international remote roles hire LATAM talent as contractors.",
+    "currency": "Preferred currency"
+  },
+  "sources": {
+    "title": "Job sources",
+    "description": "Free, official job feeds. Each one's terms ask us to credit it and link back to the original posting, which we do on every job.",
+    "free": "Free",
+    "legal_risk": "Legal risk",
+    "not_for_markets": "Has little or nothing for your current markets.",
+    "coverage": {
+      "remote": "Remote jobs worldwide, filtered for where you live",
+      "latam": "Tech jobs in Latin America and Spain (remote and on-site)",
+      "countries": "Local job sites of your target countries — needs your own free key",
+      "companies": "Every opening on the career boards of companies you follow",
+      "google": "Google for Jobs results through SerpApi (paid key)",
+      "linkedin": "LinkedIn job search through an Apify scraper (paid token)"
+    },
+    "key_label": {
+      "api_key": "API key",
+      "app_id": "Application ID",
+      "app_key": "Application key"
+    },
+    "companies_title": "Companies you follow",
+    "companies_description": "Add a company's Greenhouse, Lever or Ashby job board and every new opening there is imported, straight from the employer.",
+    "boards_hint": "Paste a board link, e.g. job-boards.greenhouse.io/acme, jobs.lever.co/acme or jobs.ashbyhq.com/acme.",
+    "board_invalid": "{{board}} isn't a Greenhouse, Lever or Ashby job board link",
+    "scrapers_title": "Scraping services (use at your own risk)",
+    "scrapers_description": "These resell data scraped from Google and LinkedIn. They keep working if you already use them, but consider the free sources above instead.",
+    "legal_note": {
+      "serpapi": "Google sued SerpApi in December 2025 for circumventing its anti-scraping protections.",
+      "apify-linkedin": "LinkedIn's terms forbid scraping; LinkedIn has sued scrapers and restricts accounts linked to them."
+    }
+  },
+  "privacy": {
+    "data_title": "Your data",
+    "data_description": "What the app keeps and where it goes.",
+    "fact_local": "Your CVs, jobs and applications are stored only on this computer.",
+    "fact_keys": "API keys live in your operating system's credential store, not in the app's database.",
+    "fact_llm": "Text is sent to an AI provider only when you use an AI feature, and only to the provider you chose (with Ollama it never leaves your network).",
+    "fact_no_telemetry": "No analytics, tracking or telemetry.",
+    "fact_rights": "You can delete your CVs and applications at any time, and clear stored page text below (your rights under the DR's Ley 172-13, the GDPR and the LGPD).",
+    "retention_label": "Keep the original text of pasted and captured pages",
+    "retention_hint": "Job fields and descriptions are always kept; this only limits how long the raw copied page text is stored.",
+    "retention_none": "Don't keep it",
+    "retention_forever": "Keep it",
+    "retention_days_one": "{{count}} day",
+    "retention_days_other": "{{count}} days",
+    "retention_saved": "Retention updated",
+    "clear_now": "Delete stored page text now",
+    "cleared_one": "Cleared the page text of {{count}} job",
+    "cleared_other": "Cleared the page text of {{count}} jobs"
   }
 }

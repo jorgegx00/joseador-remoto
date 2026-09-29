@@ -11,6 +11,10 @@ import { Label } from "@/components/ui/label";
 import { getAllCompanies, getJobsForReport } from "@/services/database";
 import { storageService } from "@/services/storage";
 import { buildReport, type ReportResult } from "@/features/reports/build-report";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CountryFlag } from "@/components/common/CountryFlag";
+import { useMarketLabel } from "@/features/markets/useMarketLabel";
+import { useSettingsStore } from "@/stores/settingsStore";
 
 const SETTING_LAST_REPORT = "report_last_generated_at";
 
@@ -28,8 +32,8 @@ function defaultFileName(now: number): string {
 }
 
 /**
- * Weekly shareable report: plain-text Spanish summary of DR-friendly tech
- * jobs. By default only jobs synced since the last generated report are
+ * Weekly shareable report: plain-text Spanish summary of tech jobs open to one
+ * of the user's target markets. By default only jobs synced since the last generated report are
  * included; copying or saving advances the marker.
  */
 export function ReportsPage() {
@@ -38,6 +42,12 @@ export function ReportsPage() {
   const [includeAll, setIncludeAll] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [report, setReport] = useState<ReportResult | null>(null);
+  const targetMarkets = useSettingsStore((s) => s.market.targetMarkets);
+  const marketLabel = useMarketLabel();
+  const [market, setMarket] = useState<string>(targetMarkets[0] ?? "DO");
+  useEffect(() => {
+    if (!targetMarkets.includes(market)) setMarket(targetMarkets[0] ?? "DO");
+  }, [targetMarkets, market]);
   // Timestamp captured at generation time — becomes the new marker on share.
   const generatedAtRef = useRef<number | null>(null);
 
@@ -59,7 +69,7 @@ export function ReportsPage() {
         getAllCompanies(),
       ]);
       const companiesById = new Map(companies.map((c) => [c.id, c]));
-      const result = buildReport(jobs, companiesById, { now, since });
+      const result = buildReport(jobs, companiesById, { now, since, market });
       generatedAtRef.current = now;
       setReport(result);
       if (result.included === 0) {
@@ -70,7 +80,7 @@ export function ReportsPage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [includeAll, lastReportAt, t]);
+  }, [includeAll, lastReportAt, market, t]);
 
   /** Advance the "last report" marker after the report has been shared. */
   const markReported = useCallback(async () => {
@@ -124,6 +134,28 @@ export function ReportsPage() {
             <CardDescription>{lastReportLabel}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {targetMarkets.length > 1 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <Label htmlFor="report-market" className="text-sm font-normal">
+                  {t("market")}
+                </Label>
+                <Select value={market} onValueChange={setMarket}>
+                  <SelectTrigger id="report-market" className="h-8 w-64">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {targetMarkets.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        <span className="flex items-center gap-2">
+                          <CountryFlag code={m} />
+                          {marketLabel(m)}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <Switch
                 id="include-all"

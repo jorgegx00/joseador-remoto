@@ -36,7 +36,7 @@ function infersSeniority(cv: CvRecord): SeniorityLevel | null {
 
 /**
  * Heuristic 0–100 match score between a job and a CV.
- * Breakdown: 60 skills / 25 title / 10 seniority / 5 DR-friendly.
+ * Breakdown: 60 skills / 25 title / 10 seniority / 5 eligible for the target markets.
  *
  * Skills match uses case-insensitive exact token match (after normalization).
  * Title match is token-set overlap between job.title and the CV's current-role title.
@@ -91,8 +91,8 @@ export function computeMatchScore(job: Job, cv: CvRecord): number {
     }
   }
 
-  const drPoints = job.is_dr_friendly ? 5 : 0;
+  const locationPoints = job.is_market_eligible ? 5 : 0;
 
-  const total = skillPoints + titlePoints + seniorityPoints + drPoints;
+  const total = skillPoints + titlePoints + seniorityPoints + locationPoints;
   return Math.round(Math.max(0, Math.min(100, total)));
 }

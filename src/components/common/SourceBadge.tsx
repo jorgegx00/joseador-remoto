@@ -5,6 +5,8 @@ import type { JobSource } from "@/types";
 
 interface SourceBadgeProps {
   source: JobSource;
+  /** The feed the job came from ("Himalayas"), shown instead of the generic label — its terms ask for credit. */
+  via?: string | null;
 }
 
 const SOURCE_CONFIG: Record<
@@ -37,7 +39,7 @@ const SOURCE_CONFIG: Record<
   },
 };
 
-export function SourceBadge({ source }: SourceBadgeProps) {
+export function SourceBadge({ source, via }: SourceBadgeProps) {
   const { t } = useTranslation("common");
   const config = SOURCE_CONFIG[source] ?? SOURCE_CONFIG.aggregator;
   const Icon = config.icon;
@@ -45,7 +47,7 @@ export function SourceBadge({ source }: SourceBadgeProps) {
   return (
     <Badge variant="outline" className={config.colorClass}>
       <Icon className="h-3 w-3" />
-      {t(`job_sources.${source}`)}
+      {via ?? t(`job_sources.${source}`)}
     </Badge>
   );
 }

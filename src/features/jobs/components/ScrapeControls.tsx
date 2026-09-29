@@ -19,8 +19,8 @@ function formatWhen(ts: number, locale: string): string {
 }
 
 /**
- * Manual scrape trigger: runs the in-app ingest pipeline (SerpApi + Apify
- * LinkedIn with the user's own keys) and writes straight to local SQLite.
+ * Manual "search jobs" trigger: runs the in-app ingest pipeline over the enabled
+ * sources (src/services/ingest/sources.ts) and writes straight to local SQLite.
  */
 export function ScrapeControls() {
   const { t, i18n } = useTranslation("jobs");

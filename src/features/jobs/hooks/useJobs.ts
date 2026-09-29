@@ -14,7 +14,7 @@ export function useJobs() {
     fetchCompanies,
     setFilters,
     resetFilters,
-    drFriendlyJobs,
+    eligibleJobs,
     selectJob,
     selectedJob,
     getJob,
@@ -26,7 +26,7 @@ export function useJobs() {
     void fetchCompanies();
   }, [fetchJobs, fetchAllJobs, fetchCompanies]);
 
-  const drFriendlyCount = jobs.filter((j) => j.is_dr_friendly).length;
+  const eligibleCount = jobs.filter((j) => j.is_market_eligible).length;
 
   const sourceCountMap: Record<string, number> = {};
   for (const job of jobs) {
@@ -44,14 +44,14 @@ export function useJobs() {
     isLoading,
     error,
     filters,
-    drFriendlyCount,
+    eligibleCount,
     sourceCountMap,
     uniqueCompanyNames,
     fetchJobs,
     fetchCompanies,
     setFilters,
     resetFilters,
-    drFriendlyJobs,
+    eligibleJobs,
     selectJob,
     selectedJob,
     getJob,

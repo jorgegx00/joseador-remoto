@@ -1,5 +1,6 @@
 /**
- * Plain-text weekly report (Spanish) of DR-friendly tech jobs, in the format
+ * Plain-text weekly report (Spanish) of tech jobs open to one target market
+ * (the Dominican Republic by default), in the format
  * agreed with the user: one block per job (titulo, empresa, local/extranjera,
  * salario, descripción, tecnologías, nivel+experiencia, perfiles recomendados,
  * link), grouped by role category with a summary header.
@@ -12,12 +13,40 @@ import { formatSalary } from "./utils/salary-format";
 import { formatLevel } from "./utils/experience";
 import { companyOrigin } from "./utils/company-origin";
 import { recommendedProfiles } from "./utils/recommended-profiles";
+import { countryName } from "@/lib/markets/countries";
+import { isRegionCode } from "@/lib/markets/regions";
+import { isEligibleVerdict } from "@/lib/markets/eligibility";
 
 export interface ReportOptions {
   /** Timestamp of the report run (header date). */
   now: number;
   /** Lower bound used to select the jobs (header context), or null for "all". */
   since: number | null;
+  /** Target market the report is about (ISO country or region). Default: "DO". */
+  market?: string;
+}
+
+const REGION_NAMES_ES: Record<string, string> = {
+  WORLDWIDE: "CUALQUIER PAÍS (REMOTO)",
+  LATAM: "LATINOAMÉRICA",
+  CARIBBEAN: "EL CARIBE",
+  NA: "NORTEAMÉRICA",
+  EU: "LA UNIÓN EUROPEA",
+  EUROPE: "EUROPA",
+  EMEA: "EMEA",
+  APAC: "ASIA-PACÍFICO",
+};
+
+/** Spanish header name of a market ("REPÚBLICA DOMINICANA"). */
+function marketNameEs(market: string): string {
+  return isRegionCode(market) ? REGION_NAMES_ES[market] : countryName(market, "es").toUpperCase();
+}
+
+/** Open to `market`. Rows without per-market verdicts fall back to the DR flag for "DO". */
+export function isJobInMarket(job: Job, market: string): boolean {
+  const verdict = job.market_eligibility?.[market]?.verdict;
+  if (verdict) return isEligibleVerdict(verdict);
+  return market === "DO" && job.is_dr_friendly;
 }
 
 export interface ReportResult {
@@ -52,7 +81,7 @@ interface Entry {
   category: RoleCategory;
 }
 
-function renderJob(entry: Entry, index: number): string {
+function renderJob(entry: Entry, index: number, market: string): string {
   const { job, company, category } = entry;
   const techs = extractTechs(job.title, job.description, job.skills_required);
   const level = formatLevel(job.seniority_level, job.description);
@@ -61,7 +90,7 @@ function renderJob(entry: Entry, index: number): string {
   const lines = [
     `[${index}] ${job.title}`,
     `Empresa: ${company?.name ?? "No especificada"}`,
-    `Tipo: ${companyOrigin(company)}`,
+    `Tipo: ${companyOrigin(company, market)}`,
     `Salario: ${formatSalary(job)}`,
     `Descripción: ${summarize(job.description)}`,
     `Tecnologías: ${techs.length > 0 ? techs.join(", ") : "No especificadas"}`,
@@ -73,7 +102,7 @@ function renderJob(entry: Entry, index: number): string {
 }
 
 /**
- * Build the report over DR-friendly jobs. Non-tech titles are excluded;
+ * Build the report over jobs open to the market. Non-tech titles are excluded;
  * `companiesById` resolves the Empresa/Tipo lines.
  */
 export function buildReport(
@@ -81,11 +110,12 @@ export function buildReport(
   companiesById: Map<string, Company>,
   options: ReportOptions
 ): ReportResult {
+  const market = options.market ?? "DO";
   const entries: Entry[] = [];
   let skippedNonTech = 0;
 
   for (const job of jobs) {
-    if (!job.is_dr_friendly) continue;
+    if (!isJobInMarket(job, market)) continue;
     const category = classifyRole(job.title);
     if (category === null) {
       skippedNonTech++;
@@ -100,7 +130,7 @@ export function buildReport(
   }
 
   const header: string[] = [
-    `REPORTE DE EMPLEOS REMOTOS — CONTRATAN EN REPÚBLICA DOMINICANA`,
+    `REPORTE DE EMPLEOS REMOTOS — CONTRATAN EN ${marketNameEs(market)}`,
     `Fecha: ${fmtDate(options.now)}`,
     options.since !== null
       ? `Empleos nuevos desde el ${fmtDate(options.since)}: ${entries.length}`
@@ -120,7 +150,7 @@ export function buildReport(
     sections.push(`\n■ ${category.toUpperCase()} (${group.length})\n`);
     for (const entry of group) {
       index++;
-      sections.push(renderJob(entry, index));
+      sections.push(renderJob(entry, index, market));
       sections.push(LIGHT_RULE);
     }
   }

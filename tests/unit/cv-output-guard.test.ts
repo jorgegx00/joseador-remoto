@@ -3,6 +3,7 @@ import {
   findPlaceholderViolation,
   isRunaway,
   splitNotesAndCv,
+  stripForbiddenPersonalData,
   extractCvDuringStream,
   applyPatches,
   stripNotesBlock,
@@ -326,5 +327,51 @@ describe("cv-output-guard — quoting, parent patches, NOTES", () => {
     expect(
       extractPatchSectionsDuringStream(`<<<PATCH section="Skills">>>\nx\n<<<END PATCH>>>\n<<<PATCH section="Summ`),
     ).toEqual(["Skills", "Summ"]);
+  });
+});
+
+
+describe("stripForbiddenPersonalData", () => {
+  const md = [
+    "# Ana Pérez",
+    "Santo Domingo, RD | ana@example.com | Cédula: 000-0000000-0",
+    "**Fecha de nacimiento:** 01/01/1990",
+    "Estado civil: Soltera",
+    "",
+    "## Experiencia",
+    "- Built things",
+  ].join("\n");
+
+  it("removes personal fields a strict market forbids", () => {
+    const { markdown, removed } = stripForbiddenPersonalData(md, {
+      dateOfBirth: "omit",
+      maritalStatus: "omit",
+      nationalId: "omit",
+    });
+    expect(markdown).not.toMatch(/C[ée]dula|nacimiento|Estado civil/);
+    expect(markdown).toContain("Santo Domingo, RD | ana@example.com");
+    expect(markdown).toContain("## Experiencia");
+    expect(removed).toHaveLength(3);
+  });
+
+  it("keeps if_requested fields when the job asks for them", () => {
+    const { markdown } = stripForbiddenPersonalData(
+      md,
+      { dateOfBirth: "if_requested", maritalStatus: "if_requested", nationalId: "if_requested" },
+      "Enviar CV con cédula y fecha de nacimiento",
+    );
+    expect(markdown).toContain("Cédula");
+    expect(markdown).toContain("Fecha de nacimiento");
+    expect(markdown).not.toContain("Estado civil");
+  });
+
+  it("keeps customary fields", () => {
+    const { markdown } = stripForbiddenPersonalData(md, {
+      dateOfBirth: "common",
+      maritalStatus: "common",
+      nationalId: "if_requested",
+    });
+    expect(markdown).toContain("Fecha de nacimiento");
+    expect(markdown).not.toContain("Cédula");
   });
 });

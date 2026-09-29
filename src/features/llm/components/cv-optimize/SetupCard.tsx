@@ -133,6 +133,8 @@ export function SetupCard({
               <SelectContent>
                 <SelectItem value="en">English</SelectItem>
                 <SelectItem value="es">Español</SelectItem>
+                <SelectItem value="pt">Português (BR)</SelectItem>
+                <SelectItem value="de">Deutsch</SelectItem>
               </SelectContent>
             </Select>
             {!languageOverridden && (

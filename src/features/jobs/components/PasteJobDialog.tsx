@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   ClipboardPaste,
   Info,
+  Link2,
   Loader2,
   Mail,
   Sparkles,
@@ -49,6 +50,13 @@ import {
   type PastedJobDraft,
 } from "@/lib/jobs/pasted-job";
 import { createJobFromPastedText, extractPastedJobDraft } from "@/services/job-paste";
+import {
+  BrowserOnlySiteError,
+  resolveCaptureFromUrl,
+  saveCapturedJob,
+  type ResolvedCapture,
+} from "@/services/job-capture";
+import { analyzeUrl } from "@/lib/job-capture/canonical";
 import { useJobStore } from "@/stores/jobStore";
 import type { EmploymentType, Job, SeniorityLevel } from "@/types";
 
@@ -72,6 +80,7 @@ const EMPLOYMENT_TYPES: EmploymentType[] = ["full_time", "contract", "part_time"
 type Step = "paste" | "extracting" | "review" | "done";
 
 type ExtractionNote =
+  | { kind: "from_url"; via: ResolvedCapture["via"] }
   | { kind: "llm_used" }
   | { kind: "no_llm" }
   | { kind: "cancelled" }
@@ -186,6 +195,9 @@ function PasteJobFlow({ mode, onOpenChange, onCreated, dirtyRef }: PasteJobFlowP
   const [note, setNote] = useState<ExtractionNote | null>(null);
   const [saving, setSaving] = useState(false);
   const [savedJob, setSavedJob] = useState<Job | null>(null);
+  /** Set when the job came from a link: saved under its canonical identity. */
+  const [capture, setCapture] = useState<ResolvedCapture | null>(null);
+  const [urlError, setUrlError] = useState<string | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
   const mountedRef = useRef(true);
@@ -255,6 +267,43 @@ function PasteJobFlow({ mode, onOpenChange, onCreated, dirtyRef }: PasteJobFlowP
     }
   }, [text, showNoProviderPrompt, goToReview, heuristicsOnly]);
 
+  const urlInfo = sourceUrl.trim() ? analyzeUrl(sourceUrl.trim()) : null;
+  const canImportUrl = urlInfo !== null && /^https?:\/\//i.test(sourceUrl.trim());
+
+  const handleImportUrl = useCallback(async () => {
+    const url = sourceUrl.trim();
+    if (!url) return;
+    setUrlError(null);
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setStep("extracting");
+    try {
+      const resolved = await resolveCaptureFromUrl(url, { abortSignal: controller.signal });
+      if (controller.signal.aborted || !mountedRef.current) return;
+      setCapture(resolved);
+      setText((prev) => prev || resolved.draft.description);
+      setBaseDraft(resolved.draft);
+      setForm(draftToForm(resolved.draft, resolved.canonicalUrl));
+      setNote(
+        resolved.via === "text"
+          ? resolved.llmError
+            ? { kind: "llm_failed", message: resolved.llmError }
+            : { kind: showNoProviderPrompt ? "no_llm" : "llm_used" }
+          : { kind: "from_url", via: resolved.via },
+      );
+      setStep("review");
+    } catch (err) {
+      if (controller.signal.aborted || !mountedRef.current) return;
+      setStep("paste");
+      setUrlError(
+        err instanceof BrowserOnlySiteError ? t("paste.url_browser_only") : t("paste.url_failed", { message: errorMessage(err) }),
+      );
+    } finally {
+      if (abortRef.current === controller) abortRef.current = null;
+    }
+  }, [sourceUrl, showNoProviderPrompt, t]);
+
   const handleCancelExtraction = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
@@ -271,10 +320,10 @@ function PasteJobFlow({ mode, onOpenChange, onCreated, dirtyRef }: PasteJobFlowP
       if (!form || !baseDraft || saving) return;
       setSaving(true);
       try {
-        const { job, wasExisting } = await createJobFromPastedText(
-          text,
-          formToDraft(form, baseDraft, sourceUrl),
-        );
+        const draft = formToDraft(form, baseDraft, capture?.canonicalUrl ?? sourceUrl);
+        const { job, wasExisting } = capture
+          ? await saveCapturedJob({ ...capture, draft }, text).then((r) => ({ job: r.job, wasExisting: r.duplicate }))
+          : await createJobFromPastedText(text, draft);
         const store = useJobStore.getState();
         void store.fetchJobs();
         void store.fetchAllJobs();
@@ -293,7 +342,7 @@ function PasteJobFlow({ mode, onOpenChange, onCreated, dirtyRef }: PasteJobFlowP
         if (mountedRef.current) setSaving(false);
       }
     },
-    [form, baseDraft, saving, text, sourceUrl, t, onCreated, mode, onOpenChange],
+    [form, baseDraft, saving, text, sourceUrl, capture, t, onCreated, mode, onOpenChange],
   );
 
   const handlePasteAnother = useCallback(() => {
@@ -303,6 +352,8 @@ function PasteJobFlow({ mode, onOpenChange, onCreated, dirtyRef }: PasteJobFlowP
     setForm(null);
     setNote(null);
     setSavedJob(null);
+    setCapture(null);
+    setUrlError(null);
     setStep("paste");
   }, []);
 
@@ -326,7 +377,9 @@ function PasteJobFlow({ mode, onOpenChange, onCreated, dirtyRef }: PasteJobFlowP
           className="space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
-            void handleExtract();
+            // A link alone is enough: import it instead of parsing text.
+            if (trimmedLength === 0 && canImportUrl) void handleImportUrl();
+            else void handleExtract();
           }}
         >
           <div className="space-y-2">
@@ -367,14 +420,39 @@ function PasteJobFlow({ mode, onOpenChange, onCreated, dirtyRef }: PasteJobFlowP
 
           <div className="space-y-2">
             <Label htmlFor={fieldId("source-url")}>{t("paste.url_label")}</Label>
-            <Input
-              id={fieldId("source-url")}
-              type="url"
-              inputMode="url"
-              value={sourceUrl}
-              onChange={(e) => setSourceUrl(e.target.value)}
-              placeholder={t("paste.url_placeholder")}
-            />
+            <div className="flex gap-2">
+              <Input
+                id={fieldId("source-url")}
+                type="url"
+                inputMode="url"
+                value={sourceUrl}
+                onChange={(e) => {
+                  setSourceUrl(e.target.value);
+                  setUrlError(null);
+                }}
+                placeholder={t("paste.url_placeholder")}
+                aria-describedby={fieldId("url-help")}
+                aria-invalid={urlError ? true : undefined}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={!canImportUrl}
+                onClick={() => void handleImportUrl()}
+              >
+                <Link2 className="h-4 w-4" aria-hidden="true" />
+                {t("paste.import_url")}
+              </Button>
+            </div>
+            <p id={fieldId("url-help")} className="text-xs text-muted-foreground" aria-live="polite">
+              {urlError ? (
+                <span className="text-destructive">{urlError}</span>
+              ) : urlInfo && ["linkedin", "indeed", "google_jobs"].includes(urlInfo.site) ? (
+                t("paste.url_browser_only")
+              ) : (
+                t("paste.url_help")
+              )}
+            </p>
           </div>
 
           {showNoProviderPrompt && (
@@ -390,7 +468,7 @@ function PasteJobFlow({ mode, onOpenChange, onCreated, dirtyRef }: PasteJobFlowP
             </Button>
             <Button
               type="submit"
-              disabled={trimmedLength === 0}
+              disabled={trimmedLength === 0 && !canImportUrl}
               aria-keyshortcuts="Control+Enter"
               title={t("paste.extract_shortcut")}
             >
@@ -666,6 +744,15 @@ function PasteJobFlow({ mode, onOpenChange, onCreated, dirtyRef }: PasteJobFlowP
 
 function ExtractionNoteAlert({ note }: { note: ExtractionNote }) {
   const { t } = useTranslation("jobs");
+
+  if (note.kind === "from_url") {
+    return (
+      <Alert>
+        <CheckCircle2 aria-hidden="true" />
+        <AlertDescription>{t(`paste.from_url.${note.via}`)}</AlertDescription>
+      </Alert>
+    );
+  }
 
   if (note.kind === "llm_used") {
     return (

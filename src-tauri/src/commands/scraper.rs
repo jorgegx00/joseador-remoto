@@ -163,11 +163,31 @@ pub fn stop_sidecar(state: State<'_, ScraperState>) -> Result<(), String> {
     }
 }
 
+/// Only well-formed `parse_cv` requests for files inside the app data directory
+/// reach the sidecar, so it can't be used to read arbitrary files.
+fn validate_sidecar_command<R: Runtime>(app: &AppHandle<R>, command: &str) -> Result<String, String> {
+    let json: serde_json::Value =
+        serde_json::from_str(command.trim()).map_err(|_| "Sidecar command must be JSON".to_string())?;
+    let action = json.get("action").and_then(|a| a.as_str()).unwrap_or("");
+    if action != "parse_cv" {
+        return Err(format!("Unsupported sidecar action: {}", action));
+    }
+    let path = json
+        .get("file_path")
+        .and_then(|p| p.as_str())
+        .ok_or_else(|| "Missing file_path".to_string())?;
+    // Validated but passed on as given: canonical Windows paths carry a \\?\ prefix.
+    super::paths::ensure_in_app_data(app, path)?;
+    Ok(json.to_string())
+}
+
 #[tauri::command]
-pub fn send_sidecar_command(
+pub fn send_sidecar_command<R: Runtime>(
+    app: AppHandle<R>,
     state: State<'_, ScraperState>,
     command: String,
 ) -> Result<(), String> {
+    let command = validate_sidecar_command(&app, &command)?;
     let mut guard = state
         .child
         .lock()

@@ -1,5 +1,5 @@
 /**
- * Canonical CV section types and the English/Spanish heading aliases that map to them.
+ * Canonical CV section types and the English/Spanish/Portuguese/German heading aliases that map to them.
  * Shared by the markdown → ParsedCv parser and the original ↔ optimized section aligner,
  * so both agree on what "Experiencia" or "Work History" means.
  */
@@ -33,6 +33,14 @@ const ALIASES: Record<CvSectionType, string[]> = {
     "acerca de mi",
     "objetivo",
     "objetivo profesional",
+    "resumo",
+    "resumo profissional",
+    "perfil profissional",
+    "sobre mim",
+    "profil",
+    "kurzprofil",
+    "zusammenfassung",
+    "uber mich",
   ],
   skills: [
     "skills",
@@ -50,6 +58,13 @@ const ALIASES: Record<CvSectionType, string[]> = {
     "competencias",
     "aptitudes",
     "conocimientos",
+    "competencias tecnicas",
+    "competencias comportamentais",
+    "habilidades tecnicas e comportamentais",
+    "kenntnisse",
+    "fachkenntnisse",
+    "fahigkeiten",
+    "kompetenzen",
   ],
   experience: [
     "experience",
@@ -63,6 +78,12 @@ const ALIASES: Record<CvSectionType, string[]> = {
     "experiencia laboral",
     "experiencia profesional",
     "historial laboral",
+    "experiencia profissional",
+    "historico profissional",
+    "berufserfahrung",
+    "berufliche erfahrung",
+    "werdegang",
+    "beruflicher werdegang",
   ],
   education: [
     "education",
@@ -72,6 +93,11 @@ const ALIASES: Record<CvSectionType, string[]> = {
     "formacion",
     "formacion academica",
     "estudios",
+    "formacao",
+    "formacao academica",
+    "ausbildung",
+    "bildung",
+    "studium",
   ],
   certifications: [
     "certifications",
@@ -82,6 +108,9 @@ const ALIASES: Record<CvSectionType, string[]> = {
     "certificaciones",
     "certificados",
     "licencias y certificaciones",
+    "certificacoes",
+    "zertifikate",
+    "zertifizierungen",
   ],
   projects: [
     "projects",
@@ -92,9 +121,11 @@ const ALIASES: Record<CvSectionType, string[]> = {
     "proyectos",
     "proyectos personales",
     "proyectos destacados",
+    "projetos",
+    "projekte",
   ],
-  languages: ["languages", "language skills", "idiomas", "lenguajes"],
-  contact: ["contact", "contact information", "contacto", "informacion de contacto"],
+  languages: ["languages", "language skills", "idiomas", "lenguajes", "sprachen", "sprachkenntnisse"],
+  contact: ["contact", "contact information", "contacto", "informacion de contacto", "contato", "kontakt"],
 };
 
 const LOOKUP: Map<string, CvSectionType> = (() => {
@@ -132,5 +163,5 @@ export function canonicalSectionType(heading: string): CvSectionType | null {
 /** Hint for skills sub-headings: "Soft Skills" / "Habilidades blandas" → soft. */
 export function isSoftSkillsLabel(label: string): boolean {
   const norm = normalizeHeadingText(label);
-  return /\b(soft|blandas?|interpersonal|interpersonales|personales)\b/.test(norm);
+  return /\b(soft|blandas?|interpersonal|interpersonales|personales|comportamentais|sozial\w*)\b/.test(norm);
 }

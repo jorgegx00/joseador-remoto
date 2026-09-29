@@ -9,7 +9,8 @@ export function useJobFilters() {
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (filters.sources.length > 0) count++;
-    if (filters.drFilter !== "all") count++;
+    if (filters.eligibilityFilter !== "all") count++;
+    if (filters.markets.length > 0) count++;
     if (filters.seniorityLevels.length > 0) count++;
     if (filters.employmentTypes.length > 0) count++;
     if (filters.salaryMin !== null || filters.salaryMax !== null) count++;
@@ -35,11 +36,21 @@ export function useJobFilters() {
     [filters.sources, setFilters]
   );
 
-  const setDrFilter = useCallback(
-    (value: JobFilters["drFilter"]) => {
-      setFilters({ drFilter: value });
+  const setEligibilityFilter = useCallback(
+    (value: JobFilters["eligibilityFilter"]) => {
+      setFilters({ eligibilityFilter: value });
     },
     [setFilters]
+  );
+
+  const toggleMarket = useCallback(
+    (market: string) => {
+      const current = filters.markets;
+      setFilters({
+        markets: current.includes(market) ? current.filter((m) => m !== market) : [...current, market],
+      });
+    },
+    [filters.markets, setFilters]
   );
 
   const toggleSeniority = useCallback(
@@ -151,7 +162,8 @@ export function useJobFilters() {
     activeFilterCount,
     hasActiveFilters,
     toggleSource,
-    setDrFilter,
+    setEligibilityFilter,
+    toggleMarket,
     toggleSeniority,
     toggleEmploymentType,
     toggleRole,

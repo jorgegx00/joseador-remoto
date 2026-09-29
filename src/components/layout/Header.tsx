@@ -10,6 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { OllamaStatusChip } from "./OllamaStatusChip";
+import { MarketChip } from "@/features/markets/MarketChip";
 
 interface BreadcrumbItem {
   label: string;
@@ -103,6 +104,9 @@ export function Header() {
 
       {/* Right actions */}
       <div className="flex items-center gap-2 shrink-0">
+        {/* Target markets quick switcher */}
+        <MarketChip />
+
         {/* Active local Ollama model status (renders only when relevant) */}
         <OllamaStatusChip />
 

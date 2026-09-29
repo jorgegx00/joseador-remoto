@@ -576,6 +576,22 @@ export class LlmService {
   }
 
   // -------------------------------------------------------------------------
+  // Hiring-geography extraction (batched). Only for jobs whose keyword scope was
+  // uninformative; the app judges the returned scope against every market.
+  // -------------------------------------------------------------------------
+  async extractLocationScopes(
+    jobs: prompts.LocationScopeJobInput[],
+  ): Promise<z.infer<typeof schemas.locationScopeSchema>["results"]> {
+    const result = await this.object("extract", {
+      schema: schemas.locationScopeSchema,
+      schemaName: "HiringGeography",
+      schemaDescription: "Per-job hiring geography (workplace, countries, regions, work authorization).",
+      prompt: prompts.buildLocationScopePrompt(jobs),
+    });
+    return result.object.results;
+  }
+
+  // -------------------------------------------------------------------------
   // DR/LATAM eligibility adjudication (batched)
   // Only used for jobs the cheap keyword classifier left "ambiguous", so LLM
   // cost stays bounded. Resolves each to explicit_latam | global_remote | restricted.

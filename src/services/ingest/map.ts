@@ -12,6 +12,7 @@ import type { RawSourceJob } from "./types";
 const SOURCE_LABELS: Record<string, string> = {
   serpapi: "aggregator",
   "apify-linkedin": "linkedin",
+  "ats-boards": "career_page",
 };
 
 /** Minimal HTML/whitespace sanitizer (the upstream APIs return mostly-plain text). */
@@ -99,6 +100,7 @@ export async function mapRawJob(raw: RawSourceJob, sourceName = "serpapi"): Prom
     is_dr_friendly: drResult.friendly,
     dr_filter_reason: drResult.reason,
     dr_eligibility: drResult.eligibility,
+    canonical_key: raw.canonical_key,
     needs_recovery: needsRecovery || undefined,
     raw_payload: needsRecovery ? raw.raw_payload : undefined,
   };

@@ -1,18 +1,20 @@
 # Joseador Remoto
 
-Asistente de busqueda de empleo remoto para profesionales de tecnologia de Republica Dominicana. Busca empleos en Google Jobs y LinkedIn, gestiona postulaciones, optimiza tu CV con inteligencia artificial y preparate para entrevistas — todo desde una sola app de escritorio, sin servidor.
+Asistente de busqueda de empleo para profesionales de tecnologia — pensado desde Republica Dominicana, para cualquier pais. Elige los mercados donde buscas trabajo, trae empleos de fuentes legitimas, gestiona postulaciones, optimiza tu CV con inteligencia artificial y preparate para entrevistas — todo desde una sola app de escritorio, sin servidor.
 
 ## Caracteristicas
 
-- **Busqueda de empleos**: La app consulta Google Jobs (via SerpApi) y LinkedIn (via Apify) con tus propias claves de API. Cubre todo el espectro tech — web, movil (iOS/Android), datos, ML/IA, DevOps, QA, seguridad, embebidos, juegos, blockchain, diseno — en ingles y espanol
-- **Insignia "RD-friendly"**: Todos los empleos remotos se guardan; la compatibilidad con RD se muestra como insignia y filtro (activado por defecto), nunca se descartan empleos
+- **Mercados**: Indica donde vives y donde buscas empleo (paises, regiones como Latinoamerica o la UE, o remoto desde cualquier pais). Cada empleo muestra si esta abierto a tus mercados; las convenciones del CV (foto, fecha de nacimiento, cedula, paginas, papel A4/Carta) siguen el pais del empleo
+- **Busqueda de empleos**: Fuentes oficiales y gratuitas (Himalayas, Jobicy, Remotive, Get on Board), portales locales con tu clave gratuita (Jooble, Adzuna) y los portales de las empresas que sigues (Greenhouse, Lever, Ashby). SerpApi y Apify siguen disponibles, con aviso de riesgo legal
+- **Pegar o importar por enlace**: Pega el texto de una oferta o su enlace (Greenhouse, Lever, Ashby, Workday, SmartRecruiters o paginas con datos estructurados)
+- **Elegibilidad, nunca descarte**: Todos los empleos se guardan; la elegibilidad para tus mercados se muestra como insignia y filtro
 - **Gestion de CV**: Sube, analiza y optimiza tus hojas de vida con analisis ATS
 - **Postulaciones**: Tablero Kanban para rastrear el estado de cada postulacion
 - **Preparacion de entrevistas**: Pitch builder, historias STAR, preguntas para el entrevistador y checklist
 - **Generacion con IA**: CV optimizado, cartas de presentacion y analisis de coincidencia usando tu propio LLM (BYOT)
 - **Calendario**: Vista de entrevistas programadas con notificaciones
-- **i18n**: Interfaz completa en espanol (LATAM) e ingles
-- **100% local**: Tus datos viven en SQLite en tu equipo; las claves de API se guardan cifradas (AES-256-GCM) y nunca salen de tu maquina
+- **i18n**: Interfaz completa en espanol (LATAM) e ingles; CVs generados tambien en portugues y aleman
+- **100% local**: Tus datos viven en SQLite en tu equipo; las claves de API se guardan en el almacen de credenciales del sistema operativo y nunca salen de tu maquina
 
 ## Requisitos previos
 
@@ -253,9 +255,15 @@ npm run tauri build -- --bundles app,dmg
 
 > `src-tauri/tauri.conf.json` solo declara `msi` y `nsis` como targets, por eso en Linux y macOS hay que indicar los formatos con `--bundles`. Puedes pedir solo uno (ej. `--bundles deb`). Los builds de macOS no estan firmados ni notarizados — ver [Solucion de problemas](#solucion-de-problemas).
 
-## Configurar la busqueda de empleos (scraping)
+## Configurar la busqueda de empleos
 
-La app busca empleos directamente con tus propias claves (modelo BYOT — Bring Your Own Token). Necesitas al menos una de las dos fuentes; con ambas obtienes mejor cobertura.
+Las fuentes gratuitas (Himalayas, Jobicy, Remotive, Get on Board) funcionan sin configurar nada y se filtran segun tus mercados. En **Configuraciones → Busqueda de empleos** puedes:
+
+- Activar o desactivar cada fuente
+- Agregar tu clave gratuita de [Jooble](https://jooble.org/api/about) (60+ paises, incluida RD) o de [Adzuna](https://developer.adzuna.com/) (EE. UU., Canada, Reino Unido, Espana, Alemania, Mexico, Brasil…)
+- Seguir empresas: pega el enlace de su portal en Greenhouse, Lever o Ashby y cada vacante nueva se importa directamente del empleador
+
+Opcionalmente, puedes seguir usando SerpApi (Google Jobs) y Apify (LinkedIn) con tus propias claves. **Aviso**: Google demando a SerpApi en diciembre de 2025 y los terminos de LinkedIn prohiben el scraping; para ofertas de LinkedIn, pega el texto de la oferta.
 
 ### 1. Obtener una clave de SerpApi (Google Jobs)
 
@@ -274,7 +282,7 @@ La app busca empleos directamente con tus propias claves (modelo BYOT — Bring 
 ### 3. Configurar las claves en la app
 
 1. Abre **Configuraciones → Busqueda de empleos**
-2. Pega la clave de SerpApi y/o el token de Apify (se guardan cifrados localmente con AES-256-GCM; nunca salen de tu equipo)
+2. Pega la clave de SerpApi y/o el token de Apify (se guardan en el almacen de credenciales del sistema; nunca salen de tu equipo)
 3. Opcional: edita los **terminos de busqueda** (consultas de Google Jobs y filtros de titulo de LinkedIn). Consejos:
    - No agregues palabras como "remote" o "remoto" — lo remoto se aplica con un filtro del API y esas palabras solo reducen resultados
    - En los titulos de LinkedIn, termina con `:*` para coincidencia por prefijo (ej. `iOS:*` encuentra "iOS Developer", "iOS Engineer", ...)
@@ -316,11 +324,13 @@ joseador-remoto/
     components/         # Componentes UI reutilizables
     features/           # Modulos por funcionalidad
     pages/              # Paginas/rutas
-    lib/                # Utilidades, i18n, filtro RD
+    lib/                # Utilidades, i18n
+      markets/          # Paises, regiones, elegibilidad por mercado, convenciones de CV
+      job-capture/      # Identidad de URLs, JSON-LD, APIs de ATS (importar por enlace)
     stores/             # Estado global (Zustand)
-    services/           # SQLite, dedup, almacenamiento
-      ingest/           # Pipeline de scraping (SerpApi + Apify)
-  src-tauri/            # Backend Rust (Tauri v2): SQLite, cifrado, HTTP
+    services/           # SQLite, dedup, almacenamiento, captura de empleos
+      ingest/           # Fuentes de empleo (feeds legitimos, portales de empresas, SerpApi, Apify)
+  src-tauri/            # Backend Rust (Tauri v2): SQLite, HTTP, cifrado
   sidecar/              # Proceso Node.js SOLO para parsear CVs (PDF/DOCX)
 ```
 

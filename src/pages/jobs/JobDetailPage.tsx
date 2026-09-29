@@ -25,7 +25,9 @@ import { Separator } from "@/components/ui/separator";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { LoadingSkeleton } from "@/components/common/LoadingSkeleton";
 import { SourceBadge } from "@/components/common/SourceBadge";
-import { DrFriendlyBadge } from "@/components/common/DrFriendlyBadge";
+import { attributionFor } from "@/services/ingest/sources";
+import { EligibilityBadge } from "@/components/common/EligibilityBadge";
+import { formatMoneyRange } from "@/lib/format/money";
 import { ApplyDialog } from "@/features/jobs/components/ApplyDialog";
 import { MatchAnalysisCard } from "@/features/jobs/components/MatchAnalysisCard";
 import { useJobStore } from "@/stores/jobStore";
@@ -47,7 +49,7 @@ const SENIORITY_COLORS: Record<string, string> = {
 
 export function JobDetailPage() {
   const { t } = useTranslation("jobs");
-  const { t: tCommon } = useTranslation("common");
+  const { t: tCommon, i18n } = useTranslation("common");
   const { jobId } = useParams({ from: "/jobs/$jobId" });
   const navigate = useNavigate();
 
@@ -171,7 +173,7 @@ export function JobDetailPage() {
                     {job.title}
                   </h1>
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <span className="text-base">{company?.name ?? job.company_id}</span>
+                    <span className="text-base">{company?.name || job.company_name || job.company_id}</span>
                     {company?.website && (
                       <Button
                         variant="ghost"
@@ -199,11 +201,14 @@ export function JobDetailPage() {
 
               {/* Badge Row */}
               <div className="flex flex-wrap items-center gap-2">
-                <SourceBadge source={job.source} />
-                <DrFriendlyBadge
-                  isFriendly={job.is_dr_friendly}
-                  reason={job.dr_filter_reason}
-                />
+                <SourceBadge source={job.source} via={attributionFor(job)?.label} />
+                <EligibilityBadge job={job} />
+                {job.workplace && job.workplace !== "unknown" && (
+                  <Badge variant="outline">{tCommon(`markets.workplace.${job.workplace}`)}</Badge>
+                )}
+                {job.location_scope && job.location_scope.visaSponsorship !== "unknown" && (
+                  <Badge variant="outline">{tCommon(`markets.visa.${job.location_scope.visaSponsorship}`)}</Badge>
+                )}
                 <Badge
                   variant="outline"
                   className={SENIORITY_COLORS[job.seniority_level] ?? ""}
@@ -234,13 +239,14 @@ export function JobDetailPage() {
             )}
 
             {/* Salary Card */}
-            {job.salary_min !== null && job.salary_max !== null && (
+            {(job.salary_min !== null || job.salary_max !== null) && (
               <Card className="bg-primary/5 border-primary/20">
                 <CardContent className="py-3 px-4">
                   <p className="text-lg font-semibold text-primary">
-                    ${job.salary_min.toLocaleString()} - $
-                    {job.salary_max.toLocaleString()}{" "}
-                    {job.salary_currency ?? "USD"}/{t("detail.per_year")}
+                    {formatMoneyRange(job.salary_min, job.salary_max, job.salary_currency || "USD", {
+                      locale: i18n.language || "es",
+                    })}{" "}
+                    / {t(`detail.per_${job.salary_period ?? "year"}`)}
                   </p>
                 </CardContent>
               </Card>
@@ -252,6 +258,21 @@ export function JobDetailPage() {
                 {t("detail.posted")} {postedDate}
               </p>
             )}
+
+            {/* Source credit — the feeds' terms ask for it, with a direct link. */}
+            {(() => {
+              const credit = attributionFor(job);
+              const link = job.source_url || job.apply_url;
+              if (!credit || !link) return null;
+              return (
+                <p className="text-sm text-muted-foreground">
+                  {credit.attribution} ·{" "}
+                  <button type="button" className="underline underline-offset-2 hover:text-foreground" onClick={() => void open(link)}>
+                    {t("detail.view_original")}
+                  </button>
+                </p>
+              );
+            })()}
 
             <Separator />
 
@@ -378,7 +399,7 @@ export function JobDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
-                <p className="font-medium">{company?.name ?? job.company_id}</p>
+                <p className="font-medium">{company?.name || job.company_name || job.company_id}</p>
 
                 {company?.website && (
                   <button

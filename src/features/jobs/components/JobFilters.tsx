@@ -26,6 +26,9 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { useJobFilters } from "@/features/jobs/hooks/useJobFilters";
+import { CountryFlag } from "@/components/common/CountryFlag";
+import { useMarketLabel } from "@/features/markets/useMarketLabel";
+import { useSettingsStore } from "@/stores/settingsStore";
 import type { JobSource, SeniorityLevel, EmploymentType, JobFilters as JobFiltersType } from "@/types";
 
 const SOURCES: JobSource[] = ["aggregator", "career_page", "manual"];
@@ -119,12 +122,15 @@ function TagCommand({
 
 export function JobFilters() {
   const { t } = useTranslation("jobs");
+  const targetMarkets = useSettingsStore((s) => s.market.targetMarkets);
+  const marketLabel = useMarketLabel();
   const {
     filters,
     activeFilterCount,
     hasActiveFilters,
     toggleSource,
-    setDrFilter,
+    setEligibilityFilter,
+    toggleMarket,
     toggleSeniority,
     toggleEmploymentType,
     toggleRole,
@@ -234,43 +240,48 @@ export function JobFilters() {
 
         <Separator />
 
-        {/* DR Friendly Filter */}
+        {/* Location fit for the user's target markets */}
         <div className="space-y-2">
           <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            {t("filters.dr_friendly")}
+            {t("filters.location_fit")}
           </h4>
           <RadioGroup
-            value={filters.drFilter}
+            value={filters.eligibilityFilter}
             onValueChange={(val) =>
-              setDrFilter(val as JobFiltersType["drFilter"])
+              setEligibilityFilter(val as JobFiltersType["eligibilityFilter"])
             }
             className="gap-2"
           >
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value="explicit_latam" id="dr-explicit" />
-              <Label
-                htmlFor="dr-explicit"
-                className="text-sm font-normal cursor-pointer"
-              >
-                {t("dr_filter_options.explicit_latam")}
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value="dr_friendly" id="dr-friendly" />
-              <Label
-                htmlFor="dr-friendly"
-                className="text-sm font-normal cursor-pointer"
-              >
-                {t("dr_filter_options.dr_friendly")}
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value="all" id="dr-all" />
-              <Label htmlFor="dr-all" className="text-sm font-normal cursor-pointer">
-                {t("dr_filter_options.all")}
-              </Label>
-            </div>
+            {(["explicit", "eligible", "all"] as const).map((mode) => (
+              <div key={mode} className="flex items-center gap-2">
+                <RadioGroupItem value={mode} id={`fit-${mode}`} />
+                <Label htmlFor={`fit-${mode}`} className="text-sm font-normal cursor-pointer">
+                  {t(`eligibility_options.${mode}`)}
+                </Label>
+              </div>
+            ))}
           </RadioGroup>
+          {targetMarkets.length > 1 && (
+            <div className="space-y-1.5 pt-1">
+              <p className="text-xs text-muted-foreground">{t("filters.markets")}</p>
+              {targetMarkets.map((market) => (
+                <div key={market} className="flex items-center gap-2">
+                  <Checkbox
+                    id={`market-${market}`}
+                    checked={filters.markets.includes(market)}
+                    onCheckedChange={() => toggleMarket(market)}
+                  />
+                  <Label
+                    htmlFor={`market-${market}`}
+                    className="flex items-center gap-1.5 text-sm font-normal cursor-pointer"
+                  >
+                    <CountryFlag code={market} />
+                    {marketLabel(market)}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <Separator />
@@ -400,7 +411,7 @@ export function JobFilters() {
             </p>
           ) : (
             <p className="text-xs text-foreground">
-              ${salaryValues[0].toLocaleString()} - $
+              US${salaryValues[0].toLocaleString()} – US$
               {salaryValues[1].toLocaleString()}
             </p>
           )}
@@ -412,8 +423,8 @@ export function JobFilters() {
             onValueChange={handleSalaryChange}
           />
           <div className="flex justify-between text-[10px] text-muted-foreground">
-            <span>$0</span>
-            <span>$300K</span>
+            <span>US$0</span>
+            <span>US$300K</span>
           </div>
         </div>
 

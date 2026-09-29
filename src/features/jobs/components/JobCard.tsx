@@ -6,7 +6,9 @@ import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SourceBadge } from "@/components/common/SourceBadge";
-import { DrFriendlyBadge } from "@/components/common/DrFriendlyBadge";
+import { attributionFor } from "@/services/ingest/sources";
+import { EligibilityBadge } from "@/components/common/EligibilityBadge";
+import { formatMoneyRange } from "@/lib/format/money";
 import type { Job } from "@/types";
 
 interface JobCardProps {
@@ -35,16 +37,9 @@ function getCompanyColor(name: string | null | undefined): string {
   return `hsl(${hue}, 60%, 45%)`;
 }
 
-function formatSalaryShort(value: number): string {
-  if (value >= 1000) {
-    return `$${Math.round(value / 1000)}K`;
-  }
-  return `$${value}`;
-}
-
 export function JobCard({ job, matchScore }: JobCardProps) {
   const { t } = useTranslation("jobs");
-  const { t: tCommon } = useTranslation("common");
+  const { t: tCommon, i18n } = useTranslation("common");
   const navigate = useNavigate();
   const [isBookmarked, setIsBookmarked] = useState(false);
 
@@ -110,11 +105,8 @@ export function JobCard({ job, matchScore }: JobCardProps) {
 
         {/* Badge Row */}
         <div className="flex flex-wrap items-center gap-1.5">
-          <SourceBadge source={job.source} />
-          <DrFriendlyBadge
-            isFriendly={job.is_dr_friendly}
-            reason={job.dr_filter_reason}
-          />
+          <SourceBadge source={job.source} via={attributionFor(job)?.label} />
+          <EligibilityBadge job={job} />
           <Badge
             variant="outline"
             className={
@@ -171,10 +163,12 @@ export function JobCard({ job, matchScore }: JobCardProps) {
         )}
 
         {/* Salary */}
-        {job.salary_min !== null && job.salary_max !== null && (
+        {(job.salary_min !== null || job.salary_max !== null) && (
           <span className="text-sm font-medium text-foreground whitespace-nowrap">
-            {formatSalaryShort(job.salary_min)} -{" "}
-            {formatSalaryShort(job.salary_max)}
+            {formatMoneyRange(job.salary_min, job.salary_max, job.salary_currency || "USD", {
+              locale: i18n.language || "es",
+              compact: true,
+            })}
           </span>
         )}
 

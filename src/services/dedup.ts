@@ -6,7 +6,7 @@
  * inserts new records.  Returns aggregate stats for the scrape run.
  */
 
-import { getJobByExternalId, getAllJobs, upsertJob, findOrCreateCompanyByName } from "./database";
+import { getJobByCanonicalKey, getJobByExternalId, getAllJobs, upsertJob, findOrCreateCompanyByName } from "./database";
 import { ulid } from "ulid";
 import type { Job, DrEligibility } from "@/types";
 
@@ -36,6 +36,8 @@ export interface IncomingScrapedJob {
   is_dr_friendly?: boolean;
   dr_filter_reason?: string;
   dr_eligibility?: DrEligibility;
+  /** Stable posting identity when the source knows it ("gh:123" from a company board). */
+  canonical_key?: string;
   /**
    * True when a critical field (title/company/description) couldn't be
    * extracted. The job is persisted anyway with raw_payload preserved so the
@@ -200,6 +202,12 @@ function mergeIntoExisting(existing: Job, incoming: IncomingScrapedJob): Omit<Jo
     }
   }
 
+  // An LLM-adjudicated DR verdict ("AI: …") survives a re-scrape that only has
+  // the keyword answer ("ambiguous") — otherwise every scrape would undo (and
+  // pay again for) the adjudication.
+  const keepAiDr =
+    existing.dr_filter_reason.startsWith("AI:") && (incoming.dr_eligibility ?? "ambiguous") === "ambiguous";
+
   // Earliest posted_at
   let postedAt: number;
   if (incoming.posted_at != null) {
@@ -220,9 +228,13 @@ function mergeIntoExisting(existing: Job, incoming: IncomingScrapedJob): Omit<Jo
     location: preferIncoming
       ? incoming.location || existing.location
       : existing.location || incoming.location,
-    is_dr_friendly: incoming.is_dr_friendly ?? existing.is_dr_friendly,
-    dr_filter_reason: incoming.dr_filter_reason ?? existing.dr_filter_reason,
-    dr_eligibility: incoming.dr_eligibility ?? existing.dr_eligibility,
+    is_dr_friendly: keepAiDr ? existing.is_dr_friendly : incoming.is_dr_friendly ?? existing.is_dr_friendly,
+    dr_filter_reason: keepAiDr ? existing.dr_filter_reason : incoming.dr_filter_reason ?? existing.dr_filter_reason,
+    dr_eligibility: keepAiDr ? existing.dr_eligibility : incoming.dr_eligibility ?? existing.dr_eligibility,
+    // Carried so upsertJob's recompute can keep AI-adjudicated market verdicts.
+    location_scope: existing.location_scope,
+    market_eligibility: existing.market_eligibility,
+    canonical_key: existing.canonical_key ?? incoming.canonical_key ?? null,
     source: preferIncoming ? (incoming.source as Job["source"]) : existing.source,
     source_url: preferIncoming
       ? incoming.source_url || existing.source_url
@@ -278,9 +290,12 @@ export const dedupService = {
     const existingJobs = fuzzyMergeCandidates(await getAllJobs());
 
     for (const incoming of jobs) {
-      // ----- Step 1: exact external_id match -----
+      // ----- Step 1: exact identity match (capture key, then external_id) -----
       let existingJob: Job | null = null;
-      if (incoming.external_id) {
+      if (incoming.canonical_key) {
+        existingJob = await getJobByCanonicalKey(incoming.canonical_key);
+      }
+      if (!existingJob && incoming.external_id) {
         existingJob = await getJobByExternalId(incoming.external_id);
       }
 
@@ -334,6 +349,7 @@ export const dedupService = {
           scraped_at: Date.now(),
           needs_recovery: incoming.needs_recovery ?? false,
           raw_payload: incoming.raw_payload ?? null,
+          canonical_key: incoming.canonical_key ?? null,
         });
 
         // Add to local cache so later jobs in this batch can fuzzy-match

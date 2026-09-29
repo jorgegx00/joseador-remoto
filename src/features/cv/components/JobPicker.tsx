@@ -125,12 +125,12 @@ export function JobPicker({ open, onSelect, onOpenChange, onPasteNew }: JobPicke
             aria-label={tCommon("job_sources.manual")}
           />
         ) : (
-          job.is_dr_friendly && (
+          job.is_market_eligible && (
             <Badge
               variant="outline"
               className="text-[10px] shrink-0 bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800"
             >
-              {tCommon("dr_friendly.dr_friendly")}
+              {tCommon("markets.eligibility.eligible_short")}
             </Badge>
           )
         )}

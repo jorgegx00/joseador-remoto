@@ -8,7 +8,7 @@ import {
   type IngestSummary,
 } from "@/services/ingest/run";
 import { notifyNewJobs } from "@/services/notifications";
-import { adjudicateAmbiguousDrJobs } from "@/services/dr-adjudicate";
+import { reconcileEligibility } from "@/services/eligibility-sync";
 import { useJobStore } from "@/stores/jobStore";
 import type { ScrapeRun } from "@/types";
 
@@ -51,16 +51,10 @@ export const useIngestStore = create<IngestState>((set, get) => ({
       if (summary.jobsNew > 0) {
         await notifyNewJobs(summary.jobsNew, "scrape");
       }
-      // Resolve any newly-ingested "ambiguous" DR rows via the LLM (guarded: no-op
-      // without a provider; bounded: only ambiguous rows are sent). Fire-and-forget
-      // so a slow model never blocks the scrape UI — refresh the list when it lands.
-      void adjudicateAmbiguousDrJobs()
-        .then((r) => {
-          if (r.ran && r.updated > 0) {
-            void useJobStore.getState().fetchJobs();
-          }
-        })
-        .catch((err) => console.error("[ingest] DR adjudication failed:", err));
+      // Resolve newly-ingested ambiguous rows via the LLM (guarded: no-op without a
+      // provider; bounded: only ambiguous rows are sent). Fire-and-forget so a slow
+      // model never blocks the scrape UI — the list refreshes when it lands.
+      void reconcileEligibility();
       return summary;
     } finally {
       set({ isScraping: false, progress: null });

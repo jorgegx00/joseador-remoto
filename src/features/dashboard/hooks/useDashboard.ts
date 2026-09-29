@@ -130,9 +130,9 @@ export function useDashboard(): DashboardData {
     (a) => a.status === "offered" || a.status === "accepted",
   ).length;
 
-  // Recent DR-friendly jobs (top 10)
+  // Recent jobs eligible for the user's markets (top 10)
   const recentJobs = [...jobs]
-    .filter((j) => j.is_dr_friendly)
+    .filter((j) => j.is_market_eligible)
     .sort((a, b) => b.created_at - a.created_at)
     .slice(0, 10);
 

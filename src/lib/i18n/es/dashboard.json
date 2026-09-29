@@ -39,7 +39,7 @@
     "tomorrow_at": "Manana a las {{time}}"
   },
   "recent_jobs": {
-    "title": "Empleos DR-Friendly Recientes",
+    "title": "Empleos recientes para tus mercados",
     "view_all": "Ver Todos",
     "empty_title": "No se encontraron empleos",
     "empty_description": "Busca empleos para comenzar",

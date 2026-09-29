@@ -39,7 +39,7 @@
     "tomorrow_at": "Tomorrow at {{time}}"
   },
   "recent_jobs": {
-    "title": "Recent DR-Friendly Jobs",
+    "title": "Recent jobs for your markets",
     "view_all": "View All",
     "empty_title": "No jobs found",
     "empty_description": "Search for jobs to get started",

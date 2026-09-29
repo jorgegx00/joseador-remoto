@@ -6,3 +6,4 @@ export * from "./llm";
 export * from "./interview-prep";
 export * from "./scraper";
 export * from "./settings";
+export * from "./market";

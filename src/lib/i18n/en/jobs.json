@@ -4,7 +4,6 @@
   "search_result_count": "{{count}} results",
   "filters": {
     "source": "Source",
-    "dr_friendly": "DR / LATAM",
     "role": "Role",
     "language": "Language",
     "framework": "Framework",
@@ -14,7 +13,9 @@
     "date_posted": "Date Posted",
     "company": "Company",
     "skills": "Skills",
-    "section_title": "Filters"
+    "section_title": "Filters",
+    "location_fit": "Location fit",
+    "markets": "Markets"
   },
   "date_posted_options": {
     "today": "Today",
@@ -29,7 +30,7 @@
     "company_az": "Company (A-Z)"
   },
   "header": {
-    "showing_count": "Showing {{shown}} of {{total}} jobs ({{drFriendly}} DR-friendly)"
+    "showing_count": "Showing {{shown}} of {{total}} jobs ({{eligible}} eligible for your markets)"
   },
   "recommended": {
     "title": "Recommended for you",
@@ -82,7 +83,12 @@
     "ai_generate_cover_letter": "Generate cover letter",
     "ai_no_cv": "Set a CV as primary to use AI analysis",
     "ai_no_provider": "Configure an LLM provider in Settings to use AI analysis",
-    "ai_go_to_settings": "Go to Settings"
+    "ai_go_to_settings": "Go to Settings",
+    "per_month": "month",
+    "per_week": "week",
+    "per_day": "day",
+    "per_hour": "hour",
+    "view_original": "View original posting"
   },
   "scrape": {
     "run_scrape": "Search Jobs",
@@ -93,7 +99,7 @@
     "finished": "Search finished: {{found}} jobs found, {{added}} new",
     "finished_with_note": "Search finished ({{found}} found, {{added}} new): {{message}}",
     "failed": "Search failed: {{message}}",
-    "no_keys": "Add your SerpApi key or Apify token in Settings → Scraping to search for jobs"
+    "no_keys": "All job sources are turned off. Turn one on in Settings → Job search."
   },
   "sources": {
     "aggregator": "Job Board",
@@ -114,11 +120,6 @@
     "full_time": "Full Time",
     "contract": "Contract",
     "part_time": "Part Time"
-  },
-  "dr_filter_options": {
-    "explicit_latam": "Explicit LATAM/DR",
-    "dr_friendly": "DR-friendly (incl. global)",
-    "all": "All jobs"
   },
   "roles": {
     "backend": "Backend",
@@ -228,7 +229,20 @@
       "paste_new": "Paste a job post",
       "empty": "No jobs yet. Paste a job post to get started.",
       "loading": "Loading jobs..."
+    },
+    "import_url": "Import from link",
+    "url_help": "Company career pages and Greenhouse, Lever, Ashby, Workday or SmartRecruiters links are imported directly.",
+    "url_browser_only": "LinkedIn, Indeed and Google Jobs pages can't be fetched by the app. Paste the post's text above instead.",
+    "url_failed": "Couldn't import that link: {{message}}. Paste the post's text instead.",
+    "from_url": {
+      "ats_api": "Imported from the employer's job board — review and save.",
+      "json_ld": "Imported from the page's structured job data — review and save."
     }
   },
-  "no_jobs": "No jobs found"
+  "no_jobs": "No jobs found",
+  "eligibility_options": {
+    "explicit": "Names my markets",
+    "eligible": "Eligible (incl. worldwide)",
+    "all": "All locations"
+  }
 }

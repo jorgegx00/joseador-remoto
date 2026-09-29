@@ -1,6 +1,6 @@
 {
   "title": "Reportes",
-  "subtitle": "Genera un reporte en texto plano de los empleos que contratan en RD, listo para compartir",
+  "subtitle": "Genera un reporte en texto plano de los empleos abiertos a uno de tus mercados, listo para compartir",
   "generate_title": "Reporte de empleos",
   "last_report": "Ultimo reporte: {{when}}",
   "no_previous_report": "Aun no has generado ningun reporte — el primero incluira todos los empleos",
@@ -16,5 +16,6 @@
   "save": "Guardar .txt",
   "saved": "Reporte guardado en {{path}}",
   "save_failed": "No se pudo guardar: {{message}}",
-  "preview_title": "Vista previa"
+  "preview_title": "Vista previa",
+  "market": "Mercado"
 }

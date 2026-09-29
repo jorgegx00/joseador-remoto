@@ -6,20 +6,53 @@ import {
   getAllSettings,
 } from "./database";
 
+/**
+ * Marker stored in the settings table (`api_key_<provider>`) when the real key
+ * lives in the OS credential store. The row's presence is what tells the UI a
+ * key is configured.
+ */
+const KEYCHAIN_MARKER = "keychain";
+
+const secretName = (provider: string) => `api_key_${provider}`;
+
 export const storageService = {
+  /**
+   * API keys go to the OS credential store (Windows Credential Manager, macOS
+   * Keychain, Secret Service). Only when that store is unavailable (e.g. a Linux
+   * session without a keyring daemon) do they fall back to the legacy AES value
+   * in the database.
+   */
   async saveApiKey(provider: string, key: string): Promise<void> {
-    const encrypted = await invoke<string>("encrypt_value", { value: key });
-    await this.saveSetting(`api_key_${provider}`, encrypted);
+    try {
+      await invoke("secret_set", { name: secretName(provider), value: key });
+      await this.saveSetting(secretName(provider), KEYCHAIN_MARKER);
+    } catch (err) {
+      console.warn(`[storage] credential store unavailable, using encrypted DB fallback: ${String(err)}`);
+      const encrypted = await invoke<string>("encrypt_value", { value: key });
+      await this.saveSetting(secretName(provider), encrypted);
+    }
   },
 
   async getApiKey(provider: string): Promise<string | null> {
-    const encrypted = await this.getSetting(`api_key_${provider}`);
-    if (!encrypted) return null;
-    return invoke<string>("decrypt_value", { encrypted });
+    const stored = await this.getSetting(secretName(provider));
+    if (!stored) return null;
+    if (stored === KEYCHAIN_MARKER) {
+      return invoke<string | null>("secret_get", { name: secretName(provider) });
+    }
+    // Legacy AES value: decrypt, then move it into the credential store.
+    const key = await invoke<string>("decrypt_value", { encrypted: stored });
+    try {
+      await invoke("secret_set", { name: secretName(provider), value: key });
+      await this.saveSetting(secretName(provider), KEYCHAIN_MARKER);
+    } catch {
+      // Store unavailable: keep the legacy value; retried on the next read.
+    }
+    return key;
   },
 
   async deleteApiKey(provider: string): Promise<void> {
-    await this.deleteSetting(`api_key_${provider}`);
+    await invoke("secret_delete", { name: secretName(provider) }).catch(() => {});
+    await this.deleteSetting(secretName(provider));
   },
 
   async saveSetting(key: string, value: string): Promise<void> {

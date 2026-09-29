@@ -4,7 +4,6 @@
   "search_result_count": "{{count}} resultados",
   "filters": {
     "source": "Fuente",
-    "dr_friendly": "RD / LATAM",
     "role": "Rol",
     "language": "Lenguaje",
     "framework": "Framework",
@@ -14,7 +13,9 @@
     "date_posted": "Fecha de publicacion",
     "company": "Empresa",
     "skills": "Habilidades",
-    "section_title": "Filtros"
+    "section_title": "Filtros",
+    "location_fit": "Ubicación",
+    "markets": "Mercados"
   },
   "date_posted_options": {
     "today": "Hoy",
@@ -29,7 +30,7 @@
     "company_az": "Empresa (A-Z)"
   },
   "header": {
-    "showing_count": "Mostrando {{shown}} de {{total}} empleos ({{drFriendly}} aptos para RD)"
+    "showing_count": "Mostrando {{shown}} de {{total}} empleos ({{eligible}} elegibles para tus mercados)"
   },
   "recommended": {
     "title": "Recomendados para ti",
@@ -70,7 +71,7 @@
     "save": "Guardar",
     "match_score": "Puntuacion de match",
     "not_found": "Empleo no encontrado",
-    "per_year": "anual",
+    "per_year": "año",
     "website": "Sitio web",
     "careers_page": "Pagina de carreras",
     "matched_skills": "Habilidades coincidentes",
@@ -82,7 +83,12 @@
     "ai_generate_cover_letter": "Generar carta de presentacion",
     "ai_no_cv": "Marca un CV como principal para usar el analisis con IA",
     "ai_no_provider": "Configura un proveedor LLM en Ajustes para usar el analisis con IA",
-    "ai_go_to_settings": "Ir a Ajustes"
+    "ai_go_to_settings": "Ir a Ajustes",
+    "per_month": "mes",
+    "per_week": "semana",
+    "per_day": "día",
+    "per_hour": "hora",
+    "view_original": "Ver la oferta original"
   },
   "scrape": {
     "run_scrape": "Buscar empleos",
@@ -93,7 +99,7 @@
     "finished": "Busqueda completada: {{found}} empleos encontrados, {{added}} nuevos",
     "finished_with_note": "Busqueda completada ({{found}} encontrados, {{added}} nuevos): {{message}}",
     "failed": "Error en la busqueda: {{message}}",
-    "no_keys": "Agrega tu clave de SerpApi o token de Apify en Configuraciones → Scraping para buscar empleos"
+    "no_keys": "Todas las fuentes de empleo están desactivadas. Activa alguna en Configuraciones → Búsqueda de empleos."
   },
   "sources": {
     "aggregator": "Bolsa de empleo",
@@ -114,11 +120,6 @@
     "full_time": "Tiempo completo",
     "contract": "Contrato",
     "part_time": "Medio tiempo"
-  },
-  "dr_filter_options": {
-    "explicit_latam": "LATAM/RD explícito",
-    "dr_friendly": "Apto para RD (incl. global)",
-    "all": "Todos los empleos"
   },
   "roles": {
     "backend": "Backend",
@@ -228,7 +229,20 @@
       "paste_new": "Pegar una oferta",
       "empty": "Aun no hay empleos. Pega una oferta para empezar.",
       "loading": "Cargando empleos..."
+    },
+    "import_url": "Importar desde enlace",
+    "url_help": "Se importan directamente las páginas de empleo de empresas y los enlaces de Greenhouse, Lever, Ashby, Workday o SmartRecruiters.",
+    "url_browser_only": "La app no puede descargar páginas de LinkedIn, Indeed ni Google Jobs. Pega el texto de la oferta arriba.",
+    "url_failed": "No se pudo importar ese enlace: {{message}}. Pega el texto de la oferta.",
+    "from_url": {
+      "ats_api": "Importado del portal de empleo de la empresa — revisa y guarda.",
+      "json_ld": "Importado de los datos estructurados de la página — revisa y guarda."
     }
   },
-  "no_jobs": "No se encontraron empleos"
+  "no_jobs": "No se encontraron empleos",
+  "eligibility_options": {
+    "explicit": "Menciona mis mercados",
+    "eligible": "Elegibles (incl. mundial)",
+    "all": "Todas las ubicaciones"
+  }
 }

@@ -32,6 +32,8 @@ import {
   hasUnsavedChanges,
   sessionKey,
   type OptimizationStatus,
+  applyMarketGuard,
+  marketContext,
 } from "@/stores/cvOptimizationStore";
 import { pickDefaultCv, defaultTailoredCvName, buildCvExportFileName } from "@/lib/cv/cv-document";
 import { exportMarkdownToFile, cvExportMeta } from "@/services/file-export";
@@ -272,9 +274,12 @@ export function CvGenerationPage() {
   const exportFinal = async (format: Exclude<SaveExportChoice, "none">) => {
     if (!insights || !job) return;
     try {
-      const path = await exportMarkdownToFile(insights.finalMd, format, {
+      const path = await exportMarkdownToFile(applyMarketGuard(insights.finalMd, job), format, {
         fileName: buildCvExportFileName({ fullName, company: job.company_name }, format),
-        meta: cvExportMeta(fullName, job.title, cv?.parsed_data.skills.technical ?? []),
+        meta: {
+          ...cvExportMeta(fullName, job.title, cv?.parsed_data.skills.technical ?? []),
+          pageSize: marketContext(job).rules.paper,
+        },
       });
       if (path) toast.success(tCommon("export.saved_to", { path }));
       else toast.info(t("save.export_cancelled_kept"));

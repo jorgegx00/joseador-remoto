@@ -4,7 +4,9 @@
     "general": "General",
     "llm": "Modelos de IA",
     "scraping": "Busqueda de empleos",
-    "blacklist": "Lista negra"
+    "blacklist": "Lista negra",
+    "markets": "Mercados",
+    "privacy": "Privacidad"
   },
   "general": {
     "language": "Idioma",
@@ -29,7 +31,7 @@
     "about": "Acerca de",
     "app_name": "Joseador Remoto",
     "version": "Version {{version}}",
-    "app_description": "Asistente de busqueda de empleo para profesionales de tecnologia de Republica Dominicana",
+    "app_description": "Asistente de búsqueda de empleo para profesionales de tecnología — elige los países donde buscas trabajo",
     "github_link": "Ver en GitHub",
     "coming_soon": "Proximamente"
   },
@@ -129,8 +131,8 @@
     }
   },
   "scraping": {
-    "title": "Busqueda de empleos (scraping)",
-    "description": "Los empleos se buscan directamente desde esta app con tus propias claves de API (BYOT) — sin servidor. Se guardan todos los empleos remotos de tecnologia; la afinidad con RD se muestra como insignia y filtro, nunca se descartan empleos por eso.",
+    "title": "Búsqueda de empleos",
+    "description": "\"Buscar empleos\" trae ofertas de las fuentes de abajo; las fuentes gratuitas y legítimas funcionan sin configurar nada. Todo corre en este equipo y las claves quedan en el almacén de credenciales del sistema. Se guardan todos los empleos (la elegibilidad para tus mercados es una insignia y un filtro, nunca un motivo para descartarlos).",
     "keys_title": "Claves de API",
     "serpapi_title": "SerpApi (Google Jobs)",
     "serpapi_hint": "Plan gratuito: 250 busquedas/mes (1 pagina = 1 busqueda = hasta 10 empleos).",
@@ -164,5 +166,69 @@
     "description": "Los empleos de estas empresas se ocultan en todas partes: la lista, las recomendaciones y el reporte. Agrega por nombre las empresas fraudulentas o no deseadas; si quitas una, sus empleos reaparecen. No distingue mayusculas ni minusculas.",
     "placeholder": "ej. Hire Feed",
     "empty": "Aun no hay empresas bloqueadas."
+  },
+  "markets": {
+    "title": "¿Dónde buscas empleo?",
+    "description": "La elegibilidad de los empleos, las fuentes, las convenciones del CV y el formato de salarios siguen estos mercados. Los cambios se aplican al instante.",
+    "residence": "País donde vives",
+    "residence_help": "Se usa para evaluar empleos remotos (\"remoto desde donde vivo\"). Nunca sale de este equipo.",
+    "targets": "Mercados objetivo",
+    "targets_help": "Países donde trabajarías (presencial o remoto), regiones como Latinoamérica, o remoto desde cualquier país.",
+    "work_auth": "Países donde puedes trabajar legalmente",
+    "work_auth_help": "Ciudadanía, residencia o visas. Los empleos que exigen estas autorizaciones no se marcarán como restringidos.",
+    "relocate": "Dispuesto a mudarme",
+    "relocate_help": "Lo ve el asistente de CV; los empleos presenciales en el extranjero siguen necesitando permiso de trabajo.",
+    "contractor": "Acepto contratos como contratista",
+    "contractor_help": "Muchos empleos remotos internacionales contratan talento LATAM como contratistas.",
+    "currency": "Moneda preferida"
+  },
+  "sources": {
+    "title": "Fuentes de empleo",
+    "description": "Fuentes oficiales y gratuitas. Sus términos piden dar crédito y enlazar a la oferta original, y así lo hacemos en cada empleo.",
+    "free": "Gratis",
+    "legal_risk": "Riesgo legal",
+    "not_for_markets": "Tiene poco o nada para tus mercados actuales.",
+    "coverage": {
+      "remote": "Empleos remotos de todo el mundo, filtrados según dónde vives",
+      "latam": "Empleos de tecnología en Latinoamérica y España (remotos y presenciales)",
+      "countries": "Portales locales de tus países objetivo — requiere tu propia clave gratuita",
+      "companies": "Todas las vacantes de las empresas que sigues, desde su portal de empleo",
+      "google": "Resultados de Google for Jobs vía SerpApi (clave de pago)",
+      "linkedin": "Búsqueda de LinkedIn vía un scraper de Apify (token de pago)"
+    },
+    "key_label": {
+      "api_key": "Clave de API",
+      "app_id": "ID de aplicación",
+      "app_key": "Clave de aplicación"
+    },
+    "companies_title": "Empresas que sigues",
+    "companies_description": "Agrega el portal de empleo de una empresa en Greenhouse, Lever o Ashby y se importará cada vacante nueva directamente del empleador.",
+    "boards_hint": "Pega el enlace del portal, p. ej. job-boards.greenhouse.io/acme, jobs.lever.co/acme o jobs.ashbyhq.com/acme.",
+    "board_invalid": "{{board}} no es un enlace de portal de Greenhouse, Lever o Ashby",
+    "scrapers_title": "Servicios de scraping (bajo tu propio riesgo)",
+    "scrapers_description": "Revenden datos extraídos de Google y LinkedIn. Siguen funcionando si ya los usas, pero considera las fuentes gratuitas de arriba.",
+    "legal_note": {
+      "serpapi": "Google demandó a SerpApi en diciembre de 2025 por eludir sus protecciones contra el scraping.",
+      "apify-linkedin": "Los términos de LinkedIn prohíben el scraping; LinkedIn ha demandado a scrapers y restringe las cuentas vinculadas a ellos."
+    }
+  },
+  "privacy": {
+    "data_title": "Tus datos",
+    "data_description": "Qué guarda la app y a dónde va.",
+    "fact_local": "Tus CVs, empleos y postulaciones se guardan solo en este equipo.",
+    "fact_keys": "Las claves de API se guardan en el almacén de credenciales de tu sistema, no en la base de datos de la app.",
+    "fact_llm": "El texto se envía a un proveedor de IA solo cuando usas una función de IA, y solo al proveedor que elegiste (con Ollama nunca sale de tu red).",
+    "fact_no_telemetry": "Sin analíticas, rastreo ni telemetría.",
+    "fact_rights": "Puedes borrar tus CVs y postulaciones cuando quieras, y borrar abajo el texto guardado de las páginas (tus derechos según la Ley 172-13 de RD, el RGPD y la LGPD).",
+    "retention_label": "Conservar el texto original de las páginas pegadas o capturadas",
+    "retention_hint": "Los datos y la descripción del empleo se conservan siempre; esto solo limita cuánto tiempo se guarda el texto copiado de la página.",
+    "retention_none": "No conservarlo",
+    "retention_forever": "Conservarlo",
+    "retention_days_one": "{{count}} día",
+    "retention_days_other": "{{count}} días",
+    "retention_saved": "Retención actualizada",
+    "clear_now": "Borrar ahora el texto guardado de las páginas",
+    "cleared_one": "Se borró el texto de la página de {{count}} empleo",
+    "cleared_other": "Se borró el texto de la página de {{count}} empleos"
   }
 }

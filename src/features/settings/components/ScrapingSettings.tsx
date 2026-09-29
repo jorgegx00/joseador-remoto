@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { KeyRound, ListFilter, Radar, Wallet } from "lucide-react";
+import { ListFilter, Radar, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { storageService } from "@/services/storage";
 import {
   getIngestConfig,
   setIngestNumber,
@@ -14,33 +13,8 @@ import {
   type IngestConfig,
 } from "@/services/ingest/config";
 import { useIngestStore } from "@/stores/ingestStore";
-import { ApiKeyInput } from "./ApiKeyInput";
+import { JobSourcesCard } from "./JobSourcesCard";
 import { TermListEditor } from "./TermListEditor";
-
-interface KeyProvider {
-  id: "serpapi" | "apify";
-  nameKey: string;
-  hintKey: string;
-  url: string;
-  placeholder: string;
-}
-
-const KEY_PROVIDERS: KeyProvider[] = [
-  {
-    id: "serpapi",
-    nameKey: "scraping.serpapi_title",
-    hintKey: "scraping.serpapi_hint",
-    url: "https://serpapi.com/manage-api-key",
-    placeholder: "0123abc...",
-  },
-  {
-    id: "apify",
-    nameKey: "scraping.apify_title",
-    hintKey: "scraping.apify_hint",
-    url: "https://console.apify.com/settings/integrations",
-    placeholder: "apify_api_...",
-  },
-];
 
 interface CapField {
   settingKey: string;
@@ -72,18 +46,11 @@ const CAP_FIELDS: CapField[] = [
  */
 export function ScrapingSettings() {
   const { t } = useTranslation("settings");
-  const [keysSet, setKeysSet] = useState<Record<string, boolean>>({});
   const [config, setConfig] = useState<IngestConfig | null>(null);
   const { budgets, loadBudgets } = useIngestStore();
 
   const reload = useCallback(async () => {
-    const [serpapiKey, apifyKey, currentConfig] = await Promise.all([
-      storageService.getApiKey("serpapi"),
-      storageService.getApiKey("apify"),
-      getIngestConfig(),
-    ]);
-    setKeysSet({ serpapi: Boolean(serpapiKey), apify: Boolean(apifyKey) });
-    setConfig(currentConfig);
+    setConfig(await getIngestConfig());
     void loadBudgets();
   }, [loadBudgets]);
 
@@ -128,44 +95,7 @@ export function ScrapingSettings() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <KeyRound className="h-5 w-5" />
-            {t("scraping.keys_title")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {KEY_PROVIDERS.map((provider) => (
-            <div key={provider.id} className="space-y-2">
-              <Label>{t(provider.nameKey)}</Label>
-              <p className="text-xs text-muted-foreground">
-                {t(provider.hintKey)}{" "}
-                <a
-                  href={provider.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="underline underline-offset-2 hover:text-foreground"
-                >
-                  {t("scraping.get_key_link")}
-                </a>
-              </p>
-              <ApiKeyInput
-                isKeySet={Boolean(keysSet[provider.id])}
-                placeholder={provider.placeholder}
-                onSave={async (key) => {
-                  await storageService.saveApiKey(provider.id, key);
-                  await reload();
-                }}
-                onClear={async () => {
-                  await storageService.deleteApiKey(provider.id);
-                  await reload();
-                }}
-              />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+      <JobSourcesCard />
 
       <Card>
         <CardHeader>

@@ -20,6 +20,7 @@ pub fn run() {
         .manage(ScraperState::default())
         .manage(AppDatabase::default())
         .manage(OllamaState::default())
+        .manage(commands::cv::PickedFiles::default())
         .setup(|app| {
             let app_handle = app.handle().clone();
             let app_config_dir = app_handle
@@ -60,7 +61,11 @@ pub fn run() {
             commands::cv::get_app_data_dir,
             commands::crypto::encrypt_value,
             commands::crypto::decrypt_value,
+            commands::secrets::secret_set,
+            commands::secrets::secret_get,
+            commands::secrets::secret_delete,
             commands::http::http_fetch,
+            commands::page_fetch::fetch_public_page,
             commands::report::save_text_file,
             commands::report::save_binary_file,
             commands::system::get_system_info,

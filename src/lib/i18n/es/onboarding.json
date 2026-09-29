@@ -61,5 +61,8 @@
     "follow_ups_title": "Seguimientos pendientes",
     "follow_ups_body_one": "{{count}} aplicación necesita un seguimiento o agradecimiento",
     "follow_ups_body_other": "{{count}} aplicaciones necesitan un seguimiento o agradecimiento"
-  }
+  },
+  "step_markets": "Mercados",
+  "markets_title": "¿Dónde buscas empleo?",
+  "markets_description": "Elige el país donde vives y los mercados que te interesan: países, regiones o remoto desde cualquier país. Lo usamos para marcar los empleos a los que realmente puedes aplicar y para seguir las convenciones de CV de cada país."
 }

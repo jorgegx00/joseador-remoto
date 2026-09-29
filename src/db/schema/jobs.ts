@@ -30,6 +30,12 @@ export const jobs = sqliteTable(
     created_at: integer("created_at").notNull(),
     needs_recovery: integer("needs_recovery", { mode: "boolean" }).default(false),
     raw_payload: text("raw_payload"),
+    workplace: text("workplace"), // remote | hybrid | onsite | unknown
+    location_scope: text("location_scope"), // JSON LocationScope
+    market_eligibility: text("market_eligibility"), // JSON Record<market, MarketEligibility>
+    is_market_eligible: integer("is_market_eligible", { mode: "boolean" }).default(false),
+    canonical_key: text("canonical_key"),
+    salary_period: text("salary_period"),
   },
   (table) => [
     index("idx_jobs_company_id").on(table.company_id),
@@ -40,5 +46,7 @@ export const jobs = sqliteTable(
     index("idx_jobs_seniority_level").on(table.seniority_level),
     index("idx_jobs_external_id").on(table.external_id),
     index("idx_jobs_needs_recovery").on(table.needs_recovery),
+    index("idx_jobs_is_market_eligible").on(table.is_market_eligible),
+    index("idx_jobs_canonical_key").on(table.canonical_key),
   ]
 );

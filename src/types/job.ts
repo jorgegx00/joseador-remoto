@@ -1,3 +1,7 @@
+import type { LocationScope, MarketEligibility, Workplace } from "./market";
+
+export type SalaryPeriod = "hour" | "day" | "week" | "month" | "year";
+
 export type JobSource =
   | "aggregator"
   | "career_page"
@@ -60,18 +64,38 @@ export interface Job {
    * LLM-recovery step has source material to extract from. Cleared on successful recovery.
    */
   raw_payload: string | null;
+  /**
+   * Multi-market eligibility, stamped on every save from the user's market profile
+   * (src/services/market-profile.ts). Optional so rows/objects built before the
+   * feature (and hand-built fixtures) still type-check; null/undefined = not computed.
+   */
+  workplace?: Workplace | null;
+  location_scope?: LocationScope | null;
+  /** Verdict per target market ("DO", "US", "LATAM", "WORLDWIDE"…). */
+  market_eligibility?: Record<string, MarketEligibility> | null;
+  /** Eligible (explicit or global) for at least one target market. */
+  is_market_eligible?: boolean;
+  /**
+   * Stable identity of the posting across sources and captures
+   * ("linkedin:123", "gh:acme:456"); null when the source URL doesn't reveal one.
+   */
+  canonical_key?: string | null;
+  /** Period the salary figures are expressed in; null = unknown (legacy rows are annual). */
+  salary_period?: SalaryPeriod | null;
 }
 
 export interface JobFilters {
   search: string;
   sources: JobSource[];
   /**
-   * DR/LATAM strictness for the list:
-   * - `explicit_latam` — only jobs that explicitly name DR / LATAM / Caribbean.
-   * - `dr_friendly`    — DR-friendly slice (explicit_latam + verified global_remote). Default.
-   * - `all`            — no location filtering (includes restricted + ambiguous).
+   * Location strictness for the list, judged against the user's target markets:
+   * - `explicit` — only jobs that explicitly name one of the markets.
+   * - `eligible` — explicit + verified global remote. Default.
+   * - `all`      — no location filtering (includes restricted + ambiguous).
    */
-  drFilter: "explicit_latam" | "dr_friendly" | "all";
+  eligibilityFilter: "explicit" | "eligible" | "all";
+  /** Restrict to these target markets (empty = any of the user's markets). */
+  markets: string[];
   seniorityLevels: SeniorityLevel[];
   employmentTypes: EmploymentType[];
   salaryMin: number | null;

@@ -579,6 +579,31 @@ export const cvRefinementSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
+// Hiring-geography extraction (multi-market adjudication)
+// ---------------------------------------------------------------------------
+const isoList = (what: string) =>
+  z.array(z.string()).describe(`${what} — ISO 3166-1 alpha-2 codes, uppercase; empty array if none`);
+
+export const locationScopeSchema = z.object({
+  results: z
+    .array(
+      z.object({
+        id: z.string().describe("The job id, copied verbatim from the input"),
+        workplace: z.enum(["remote", "hybrid", "onsite", "unknown"]),
+        countries: isoList("Countries the role is located in or explicitly open to"),
+        regions: z
+          .array(z.enum(["LATAM", "CARIBBEAN", "NA", "EU", "EUROPE", "EMEA", "APAC"]))
+          .describe("Regions the role is explicitly open to; empty array if none"),
+        excluded_countries: isoList("Countries the posting explicitly excludes"),
+        work_auth: isoList("Countries whose work authorization/residency/citizenship is required"),
+        global: z.boolean().describe("True only if the posting says it hires from any country in the world"),
+        reason: z.string().describe("Short justification (max 12 words) citing the deciding phrase"),
+      }),
+    )
+    .describe("One result per input job, in any order"),
+});
+
+// ---------------------------------------------------------------------------
 // DR/LATAM eligibility adjudication (ambiguous remote jobs)
 // ---------------------------------------------------------------------------
 export const drEligibilitySchema = z.object({

@@ -117,10 +117,6 @@
     "confirm_apply": "Confirmar postulacion a este empleo?",
     "confirm_reset": "Restablecer a valores predeterminados? Se perderan los cambios."
   },
-  "dr_friendly": {
-    "dr_friendly": "Apto para RD",
-    "check_eligibility": "Verificar elegibilidad"
-  },
   "time": {
     "today": "Hoy",
     "yesterday": "Ayer",
@@ -188,5 +184,47 @@
     "load": "Cargar",
     "unload": "Liberar",
     "settings": "Ajustes"
+  },
+  "markets": {
+    "regions": {
+      "WORLDWIDE": "Remoto – cualquier país",
+      "LATAM": "Latinoamérica (remoto)",
+      "CARIBBEAN": "Caribe (remoto)",
+      "NA": "Norteamérica (remoto)",
+      "EU": "Unión Europea (remoto)",
+      "EUROPE": "Europa (remoto)",
+      "EMEA": "EMEA (remoto)",
+      "APAC": "Asia-Pacífico (remoto)"
+    },
+    "picker": {
+      "placeholder": "Agrega un país o región…",
+      "search": "Buscar países o regiones",
+      "empty": "Ningún país o región coincide.",
+      "group_regions": "Remoto y regiones",
+      "group_suggested": "Sugeridos",
+      "group_all": "Todos los países",
+      "remove": "Quitar {{name}}",
+      "select_country": "Selecciona un país"
+    },
+    "eligibility": {
+      "explicit": "Abierto a {{market}}",
+      "global": "Remoto mundial",
+      "restricted": "No abierto a tus mercados",
+      "ambiguous": "Verificar elegibilidad",
+      "per_market": "Por mercado",
+      "eligible_short": "Elegible"
+    },
+    "header_chip": "Buscando empleo en",
+    "header_chip_aria": "Mercados objetivo: {{markets}}. Cambiar",
+    "workplace": {
+      "remote": "Remoto",
+      "hybrid": "Híbrido",
+      "onsite": "Presencial",
+      "unknown": "Modalidad desconocida"
+    },
+    "visa": {
+      "yes": "Ofrece patrocinio de visa",
+      "no": "Sin patrocinio de visa"
+    }
   }
 }

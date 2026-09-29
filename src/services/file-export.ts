@@ -3,6 +3,23 @@ import type { CvExportFormat, CvExportMeta } from "@/lib/cv/export/types";
 import { sanitizeFileName } from "@/lib/files/sanitize-file-name";
 import { getCvExportMarkdown, buildCvExportFileName } from "@/lib/cv/cv-document";
 import type { CvRecord } from "@/types";
+import { getJobById } from "@/services/database";
+import { getMarketProfile } from "@/services/market-profile";
+import { cvMarketsForJob, cvRulesForMarkets } from "@/lib/markets/cv-rules";
+import { getCountryProfile } from "@/lib/markets/countries";
+
+/**
+ * Paper size for a CV: the tailored job's market conventions, else the paper used
+ * where the user lives (Letter in the Americas' Letter countries, A4 elsewhere).
+ */
+async function pageSizeFor(cv: CvRecord): Promise<"LETTER" | "A4"> {
+  const profile = getMarketProfile();
+  if (cv.target_job_id) {
+    const job = await getJobById(cv.target_job_id).catch(() => null);
+    if (job) return cvRulesForMarkets(cvMarketsForJob(job, profile.targetMarkets)).paper;
+  }
+  return getCountryProfile(profile.residenceCountry).paper;
+}
 
 export const EXPORT_FILTERS: Record<CvExportFormat, { name: string; extensions: string[] }> = {
   pdf: { name: "PDF", extensions: ["pdf"] },
@@ -51,7 +68,10 @@ export async function exportCvToFile(cv: CvRecord, format: CvExportFormat): Prom
   const fullName = cv.parsed_data.full_name || cv.name;
   return exportMarkdownToFile(getCvExportMarkdown(cv), format, {
     fileName: buildCvExportFileName({ fullName, company: cv.target_company }, format),
-    meta: cvExportMeta(fullName, cv.target_job_title, cv.parsed_data.skills.technical),
+    meta: {
+      ...cvExportMeta(fullName, cv.target_job_title, cv.parsed_data.skills.technical),
+      pageSize: await pageSizeFor(cv),
+    },
   });
 }
 

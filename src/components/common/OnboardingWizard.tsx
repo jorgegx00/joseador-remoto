@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "@tanstack/react-router";
 import {
@@ -13,7 +13,11 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
+  MapPin,
 } from "lucide-react";
+import { MarketProfileForm } from "@/features/markets/MarketProfileForm";
+import { getCountryProfile, suggestResidence } from "@/lib/markets/countries";
+import { regionContains } from "@/lib/markets/regions";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -47,7 +51,7 @@ interface OnboardingWizardProps {
   onComplete: () => void;
 }
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 
 export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const { t, i18n } = useTranslation("onboarding");
@@ -95,6 +99,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
   const stepLabels = [
     t("step_1"),
+    t("step_markets"),
     t("step_2"),
     t("step_3"),
     t("step_4"),
@@ -151,12 +156,15 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
           />
         )}
         {currentStep === 1 && (
-          <StepUploadCv onNext={handleNext} />
+          <StepMarkets onNext={handleNext} />
         )}
         {currentStep === 2 && (
-          <StepConfigureLlm onNext={handleNext} />
+          <StepUploadCv onNext={handleNext} />
         )}
         {currentStep === 3 && (
+          <StepConfigureLlm onNext={handleNext} />
+        )}
+        {currentStep === 4 && (
           <StepReady
             onFindJobs={handleFindJobs}
             onExplore={handleExplore}
@@ -223,7 +231,55 @@ function StepWelcome({
 }
 
 // ---------------------------------------------------------------------------
-// Step 2: Upload CV
+// Step 2: Where are you job hunting?
+// ---------------------------------------------------------------------------
+function StepMarkets({ onNext }: { onNext: () => void }) {
+  const { t } = useTranslation("onboarding");
+  const marketConfigured = useSettingsStore((s) => s.marketConfigured);
+  const setMarketProfile = useSettingsStore((s) => s.setMarketProfile);
+
+  // First run: pre-fill from the OS timezone / locale (never IP geolocation).
+  useEffect(() => {
+    if (marketConfigured) return;
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const home = suggestResidence(tz, navigator.languages ?? []);
+    if (!home) return;
+    const targets = [home, ...(regionContains("LATAM", home) ? ["LATAM"] : []), "WORLDWIDE"];
+    void setMarketProfile({
+      residenceCountry: home,
+      targetMarkets: targets,
+      preferredCurrency: home === "DO" ? "USD" : getCountryProfile(home).currency,
+    });
+  }, [marketConfigured, setMarketProfile]);
+
+  return (
+    <>
+      <CardHeader className="text-center">
+        <div className="flex justify-center mb-2">
+          <div className="rounded-full bg-primary/10 p-4">
+            <MapPin className="h-10 w-10 text-primary" />
+          </div>
+        </div>
+        <CardTitle className="text-xl">{t("markets_title")}</CardTitle>
+        <CardDescription className="text-sm leading-relaxed">{t("markets_description")}</CardDescription>
+      </CardHeader>
+
+      <CardContent>
+        <MarketProfileForm compact />
+      </CardContent>
+
+      <CardFooter className="justify-end">
+        <Button onClick={() => { void setMarketProfile({}); onNext(); }} className="gap-2">
+          {t("common:actions.next")}
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </CardFooter>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Step 3: Upload CV
 // ---------------------------------------------------------------------------
 function StepUploadCv({ onNext }: { onNext: () => void }) {
   const { t } = useTranslation("onboarding");

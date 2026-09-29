@@ -660,7 +660,8 @@ function parseExperienceEntry(entry: RawEntry, warnings: string[]): CvExperience
   let dateText = "";
   const locationParts: string[] = [];
 
-  // Heading: "Title at Company", "Title | Company | dates", "Title @ Company", "Título en Empresa".
+  // Heading: "Title at Company", "Title | Company | dates", "Title @ Company", "Título en Empresa",
+  // "Título na Empresa" (pt), "Titel bei Firma" (de).
   const heading = stripWrap(entry.heading ?? "");
   if (!isEmptyEntryHeading(heading)) {
     const segments = heading.split(/\s*\|\s*/).map((s) => stripWrap(s)).filter(Boolean);
@@ -685,7 +686,8 @@ function parseExperienceEntry(entry: RawEntry, warnings: string[]): CvExperience
         splitOnce(text, /\s+@\s+/, true) ??
         splitOnce(text, /\s+[—–]\s+/, false) ??
         splitOnce(text, /\s+-\s+/, false) ??
-        splitOnce(text, /\s+en\s+/, true);
+        splitOnce(text, /\s+en\s+/, true) ??
+        splitOnce(text, /\s+(?:bei|na|no)\s+/, true);
       if (split && isDateLike(split[1]) && !dateText) {
         exp.title = split[0];
         dateText = split[1];

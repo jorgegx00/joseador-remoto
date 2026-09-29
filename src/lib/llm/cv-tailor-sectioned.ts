@@ -68,9 +68,17 @@ const MONTH_NAMES: Record<CvOutputLanguage, { long: string[]; short: string[] }>
     long: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
     short: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
   },
+  pt: {
+    long: ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"],
+    short: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
+  },
+  de: {
+    long: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
+    short: ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"],
+  },
 };
 
-const PRESENT_RE = /\b(present|current|currently|now|actualidad|actual|actualmente|presente|hoy)\b/i;
+const PRESENT_RE = /\b(present|current|currently|now|actualidad|actual|actualmente|presente|hoy|atual|atualmente|heute|aktuell)\b/i;
 
 /** Translates month names and "Present" in a date line; digits are never touched. */
 export function translateDateText(text: string, lang: CvOutputLanguage): string {
@@ -87,6 +95,8 @@ export function translateDateText(text: string, lang: CvOutputLanguage): string 
 const LEVEL_LABELS: Record<CvOutputLanguage, Record<string, string>> = {
   en: { native: "Native", fluent: "Fluent", advanced: "Advanced", intermediate: "Intermediate", basic: "Basic" },
   es: { native: "Nativo", fluent: "Fluido", advanced: "Avanzado", intermediate: "Intermedio", basic: "Básico" },
+  pt: { native: "Nativo", fluent: "Fluente", advanced: "Avançado", intermediate: "Intermediário", basic: "Básico" },
+  de: { native: "Muttersprache", fluent: "Verhandlungssicher", advanced: "Fortgeschritten", intermediate: "Gute Kenntnisse", basic: "Grundkenntnisse" },
 };
 
 // ---------------------------------------------------------------------------

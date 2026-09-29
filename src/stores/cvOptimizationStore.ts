@@ -23,6 +23,7 @@ import {
   stripNotesBlock,
   applyPatches,
   extractPatchSectionsDuringStream,
+  stripForbiddenPersonalData,
 } from "@/lib/llm/cv-output-guard";
 import { formatCvAsMarkdown } from "@/lib/cv/formatCvAsMarkdown";
 import { normalizeCvMarkdown } from "@/lib/cv/markdown-blocks";
@@ -52,6 +53,10 @@ import { getOrRunMatchAnalysis, getCachedMatchAnalysis } from "@/services/match-
 import { getActiveLlmConfig } from "@/services/llm-active";
 import { saveTailoredCv, type SaveTailoredCvResult } from "@/services/tailored-cv";
 import { useCvStore } from "@/stores/cvStore";
+import { useSettingsStore } from "@/stores/settingsStore";
+import { cvMarketsForJob, cvRulesForMarkets, type CvRules } from "@/lib/markets/cv-rules";
+import { countryName } from "@/lib/markets/countries";
+import { isRegionCode } from "@/lib/markets/regions";
 import type { CvRecord, Job, MatchAnalysis, GeneratedCv } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -195,8 +200,25 @@ function headingText(line: string | null): string {
   return (line ?? "").replace(/^#+\s*/, "").trim();
 }
 
+/** CV conventions of the job's market(s), from the user's market profile. */
+export function marketContext(job: Job): { rules: CvRules; label: string } {
+  const markets = cvMarketsForJob(job, useSettingsStore.getState().market.targetMarkets);
+  return {
+    rules: cvRulesForMarkets(markets),
+    label: markets.map((m) => (isRegionCode(m) ? m : countryName(m, "en"))).join(", "),
+  };
+}
+
+/** The job post's language; when it can't be told, the market's usual CV language. */
 function detectOutputLanguage(job: Job): CvOutputLanguage {
-  return detectLanguage(`${job.title}\n${job.description}`) ?? "en";
+  return detectLanguage(`${job.title}\n${job.description}`) ?? marketContext(job).rules.languages[0] ?? "en";
+}
+
+/** Drops personal data the job's market says must not be on a CV. */
+export function applyMarketGuard(markdown: string, job: Job): string {
+  const { markdown: clean, removed } = stripForbiddenPersonalData(markdown, marketContext(job).rules, job.description);
+  if (removed.length > 0) console.info(`[cv-optimize] removed ${removed.length} personal-data line(s) per market rules`);
+  return clean;
 }
 
 function buildSkillCandidates(originalMd: string, job: Job, analysis: MatchAnalysis | null): SkillCandidate[] {
@@ -507,6 +529,7 @@ export const useCvOptimizationStore = create<CvOptimizationState>()(
               skillsToAvoid: s.skillCandidates.filter((c) => !c.selected).map((c) => c.skill),
               experienceYears: computeExperienceYears(ctx.cv.parsed_data),
               sourceCv: ctx.cv.parsed_data,
+              market: marketContext(ctx.job),
             };
 
             let content = "";
@@ -554,7 +577,7 @@ export const useCvOptimizationStore = create<CvOptimizationState>()(
             if (!isCurrentRun(run.id)) return;
             flush(true);
 
-            const proposal = normalizeCvMarkdown(content).trim();
+            const proposal = applyMarketGuard(normalizeCvMarkdown(content), ctx.job).trim();
             if (!proposal) {
               throw new GuardError(
                 "empty_output",
@@ -622,6 +645,7 @@ export const useCvOptimizationStore = create<CvOptimizationState>()(
                 .map(({ skill, importance }) => ({ skill, importance })),
               skillsToAvoid: session.skillCandidates.filter((c) => !c.selected).map((c) => c.skill),
               experienceYears: computeExperienceYears(ctx.cv.parsed_data),
+              market: marketContext(ctx.job),
               currentDraft: current,
               patchableHeadings: parseCvSections(current, "p")
                 .nodes.map((n) => n.heading)
@@ -791,7 +815,7 @@ export const useCvOptimizationStore = create<CvOptimizationState>()(
         save: async ({ name, asNew, scoreBefore, scoreAfter, defaultNamePrefix }) => {
           const { ctx, session } = get();
           if (!ctx || !session?.review) return null;
-          const markdown = composeFinal(session.review.present);
+          const markdown = applyMarketGuard(composeFinal(session.review.present), ctx.job);
           set({ isSaving: true });
           try {
             const generatedId = session.generatedId ?? ulid();

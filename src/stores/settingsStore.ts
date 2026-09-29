@@ -7,17 +7,29 @@ import {
   resolveOllamaBaseUrl,
 } from "@/lib/llm/providers/ollama-url";
 import { setSession as setOllamaSession } from "@/services/ollama-control";
+import {
+  MARKET_PROFILE_CONFIGURED_KEY,
+  MARKET_PROFILE_KEY,
+  parseMarketProfile,
+  setCurrentMarketProfile,
+} from "@/services/market-profile";
 import type {
   AppSettings,
   LlmSettings,
   LlmProviderName,
   LlmProviderSettings,
+  MarketProfile,
   OllamaSettings,
 } from "@/types";
+import { DEFAULT_MARKET_PROFILE } from "@/types";
 
 interface SettingsState {
   app: AppSettings;
   llm: LlmSettings;
+  /** Where the user lives and which markets they're job hunting in. */
+  market: MarketProfile;
+  /** False until the user confirmed their markets (existing installs default to DR). */
+  marketConfigured: boolean;
   isLoading: boolean;
   /**
    * True once `loadSettings` has successfully read persisted state from storage at
@@ -38,6 +50,8 @@ interface SettingsState {
   getApiKey: (provider: LlmProviderName) => Promise<string | null>;
   setActiveProviderAndModel: (provider: LlmProviderName, model: string) => Promise<void>;
   setOllamaSettings: (partial: Partial<OllamaSettings>) => Promise<void>;
+  /** Persist market changes; job eligibility is recomputed by a subscriber in App.tsx. */
+  setMarketProfile: (partial: Partial<MarketProfile>) => Promise<void>;
   testConnection: (provider: LlmProviderName) => Promise<boolean>;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -103,6 +117,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     },
     ollama: { ...defaultOllamaSettings },
   },
+  market: { ...DEFAULT_MARKET_PROFILE },
+  marketConfigured: false,
   isLoading: false,
   hydrated: false,
   error: null,
@@ -188,6 +204,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       };
       if (activeProvider === "ollama") syncOllamaSession(ollama);
 
+      const market = parseMarketProfile(allSettings[MARKET_PROFILE_KEY]);
+      setCurrentMarketProfile(market);
+
       set((state) => ({
         app: { ...state.app, ...appSettings },
         llm: {
@@ -196,6 +215,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
           providers,
           ollama,
         },
+        market,
+        marketConfigured: allSettings[MARKET_PROFILE_CONFIGURED_KEY] === "true",
         isLoading: false,
         hydrated: true,
       }));
@@ -298,6 +319,14 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set((state) => ({ llm: { ...state.llm, ollama: next } }));
     syncOllamaSession(next);
     await persistOllamaSettings(next);
+  },
+
+  setMarketProfile: async (partial) => {
+    const next = parseMarketProfile(JSON.stringify({ ...get().market, ...partial }));
+    setCurrentMarketProfile(next);
+    set({ market: next, marketConfigured: true });
+    await storageService.saveSetting(MARKET_PROFILE_KEY, JSON.stringify(next));
+    await storageService.saveSetting(MARKET_PROFILE_CONFIGURED_KEY, "true");
   },
 
   testConnection: async (provider) => {
